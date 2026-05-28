@@ -1,0 +1,10 @@
+{
+  "name": "rubi-ventures-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Marketing site for Rubi Ventures, LLC. Single-file static HTML — designed to drop into Squarespace via Code Block or Code Injection, or to host anywhere that serves static files.",
+  "scripts": {
+    "dev": "npx --yes serve -l 3000 .",
+    "start": "npx --yes serve -l 3000 ."
+  }
+}

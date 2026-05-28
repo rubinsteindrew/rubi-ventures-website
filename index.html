@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubi Ventures — Apps worth opening</title>
+  <meta name="description" content="Rubi Ventures, LLC builds thoughtful consumer apps. Today we build apps. Tomorrow, whatever earns the same care.">
+  <meta name="theme-color" content="#FAF7F0">
+  <meta property="og:title" content="Rubi Ventures">
+  <meta property="og:description" content="We build apps worth opening.">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+
+  <style>
+    /* =====================================================================
+       Rubi Ventures, LLC — single-file marketing site.
+
+       Deployment notes
+       ----------------
+       • Local preview:  `npm run dev`  (uses npx serve)
+                         or open this file directly in a browser.
+       • Squarespace:    paste this whole file's contents into a single
+                         Code Block, or split <style>/<script> into Code
+                         Injection (header/footer) and the <body> markup
+                         into a Code Block. Either path is supported.
+       • Replace the inline SVG logo with your actual logo file by swapping
+         <use href="#gem"/> usages for <img src="assets/logo-mark.svg">.
+
+       Forms wire-up
+       -------------
+       This file ships with two forms (launch updates + contact). Both
+       post to placeholders. To wire them up, scroll to the <script>
+       block and set SUBSCRIBE_ENDPOINT and CONTACT_ENDPOINT — see the
+       comments there for Formspree / Resend / ConvertKit options.
+       ===================================================================== */
+
+    /* ----- Design tokens ----- */
+    :root {
+      --cream:        #FAF7F0;  /* background */
+      --charcoal:     #2A2622;  /* primary text */
+      --muted:        #6B6359;  /* light secondary text (small UI only) */
+      --muted-body:   #5A534A;  /* AAA-compliant secondary body text */
+      --ruby:         #B01E37;  /* accent — links, CTAs, gem */
+      --ruby-dark:    #931a2e;  /* button hover */
+      --hairline:     rgba(42, 38, 34, 0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--charcoal);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+    @media (max-width: 640px) { body { font-size: 16px; } }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; }
+
+    ::selection { background: rgba(176, 30, 55, 0.2); color: var(--charcoal); }
+    :focus { outline: none; }
+    :focus-visible { outline: 2px solid var(--ruby); outline-offset: 3px; border-radius: 2px; }
+
+    /* ----- Layout ----- */
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    @media (min-width: 768px) { .container { padding: 0 40px; } }
+
+    section { padding: 96px 0; }
+    @media (min-width: 768px) { section { padding: 128px 0; } }
+    .divided { border-top: 1px solid var(--hairline); }
+
+    .grid { display: grid; gap: 40px; grid-template-columns: 1fr; }
+    @media (min-width: 900px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 56px; } }
+    .col-4, .col-5, .col-7, .col-8 { grid-column: 1 / -1; }
+    @media (min-width: 900px) {
+      .col-4 { grid-column: span 4; }
+      .col-5 { grid-column: span 5; }
+      .col-7 { grid-column: span 7; }
+      .col-8 { grid-column: span 8; }
+    }
+
+    /* ----- Typography ----- */
+    h1, h2, h3 {
+      margin: 0;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 500;
+      color: var(--charcoal);
+      letter-spacing: -0.005em;
+      line-height: 1.08;
+    }
+    h1 {
+      font-size: clamp(46px, 7.4vw, 92px);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+    }
+    h2 { font-size: clamp(34px, 4.6vw, 60px); }
+    h3 { font-size: clamp(24px, 2.4vw, 30px); }
+    p  { margin: 0; }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted-body);
+    }
+    .lede {
+      font-size: clamp(18px, 1.55vw, 21px);
+      line-height: 1.55;
+      color: var(--muted-body);
+      max-width: 560px;
+    }
+    .accent { color: var(--ruby); }
+    .serif  { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+    /* ----- Buttons ----- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ruby);
+      color: var(--cream);
+      padding: 14px 28px;
+      border: 0;
+      border-radius: 6px;
+      font: 500 14px/1 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 200ms ease;
+    }
+    .btn:hover, .btn:focus-visible { background: var(--ruby-dark); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ----- Animated underline link ----- */
+    .link {
+      color: var(--ruby);
+      text-decoration: none;
+      position: relative;
+      display: inline-block;
+      padding-bottom: 2px;
+      font-weight: 500;
+    }
+    .link::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 1px;
+      width: 100%;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 280ms ease-out;
+    }
+    .link:hover::after, .link:focus-visible::after { transform: scaleX(1); }
+
+    /* ----- Nav ----- */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      background: var(--cream);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .nav-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--charcoal);
+    }
+    .nav-brand .wordmark { font-size: 22px; }
+    .nav ul {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .nav ul a {
+      font-size: 15px;
+      text-decoration: none;
+      color: var(--charcoal);
+      transition: color 200ms ease;
+    }
+    .nav ul a:hover, .nav ul a:focus-visible { color: var(--ruby); }
+    @media (max-width: 480px) {
+      .nav ul { gap: 20px; }
+      .nav ul a { font-size: 14px; }
+    }
+
+    /* ----- Wordmark ----- */
+    .wordmark {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      display: inline-flex;
+      align-items: baseline;
+      white-space: nowrap;
+    }
+    .wordmark .i {
+      position: relative;
+      display: inline-block;
+    }
+    /* The gem dots the i — sized and positioned relative to the i's em-box
+       so it scales with the wordmark font-size. */
+    .wordmark .gem-dot {
+      position: absolute;
+      left: 50%;
+      top: -0.02em;
+      width: 0.42em;
+      height: 0.46em;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    /* ----- Hero ----- */
+    .hero { padding-top: 144px; padding-bottom: 80px; }
+    @media (min-width: 768px) { .hero { padding-top: 176px; padding-bottom: 112px; } }
+    .hero h1 { margin-top: 24px; max-width: 14ch; }
+    .hero .lede { margin-top: 28px; }
+    .hero-cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      align-items: center;
+      margin-top: 48px;
+    }
+
+    /* ----- Bullets ----- */
+    .bullets {
+      list-style: none;
+      padding: 0;
+      margin: 24px 0 0;
+      max-width: 560px;
+    }
+    .bullets li {
+      padding-left: 22px;
+      position: relative;
+      color: var(--charcoal);
+    }
+    .bullets li + li { margin-top: 10px; }
+    .bullets li::before {
+      content: "·";
+      color: var(--ruby);
+      position: absolute;
+      left: 6px;
+      top: -0.1em;
+      font-size: 1.4em;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    /* ----- Forms ----- */
+    .field { display: block; }
+    .field + .field { margin-top: 22px; }
+    .field label { display: block; margin-bottom: 10px; }
+    .field input,
+    .field textarea,
+    .inline-form input {
+      width: 100%;
+      background: transparent;
+      color: var(--charcoal);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 13px 16px;
+      font: 16px/1.5 'Inter', sans-serif;
+      transition: border-color 200ms ease;
+    }
+    .field input::placeholder,
+    .field textarea::placeholder,
+    .inline-form input::placeholder { color: rgba(107, 99, 89, 0.7); }
+    .field input:focus,
+    .field textarea:focus,
+    .inline-form input:focus {
+      border-color: var(--ruby);
+      outline: none;
+    }
+    .field textarea { resize: vertical; min-height: 140px; }
+
+    .inline-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 480px;
+    }
+    @media (min-width: 540px) { .inline-form { flex-direction: row; align-items: stretch; } }
+    .inline-form input { flex: 1; }
+
+    .form-status {
+      font-size: 14px;
+      margin-top: 12px;
+      color: var(--muted-body);
+      line-height: 1.5;
+    }
+    .form-status[data-state="error"] { color: var(--ruby); }
+
+    /* ----- Device frame ----- */
+    .device {
+      width: 100%;
+      max-width: 252px;
+      margin: 0 auto;
+      aspect-ratio: 9 / 19;
+      border: 1px solid var(--hairline);
+      border-radius: 36px;
+      padding: 8px;
+    }
+    .device-inner {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--hairline);
+      border-radius: 28px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .device-notch {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      width: 56px;
+      height: 4px;
+      transform: translateX(-50%);
+      background: rgba(42, 38, 34, 0.15);
+      border-radius: 999px;
+    }
+    .device-inner .serif { font-size: 22px; margin-top: 14px; }
+    .device-inner .eyebrow { margin-top: 14px; }
+
+    /* ----- Footer ----- */
+    footer {
+      border-top: 1px solid var(--hairline);
+      padding: 40px 0;
+    }
+    .footer-row {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    @media (min-width: 600px) { .footer-row { flex-direction: row; } }
+    .footer-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted-body);
+      font-size: 13px;
+    }
+    .socials {
+      display: flex;
+      gap: 22px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .socials a {
+      color: var(--muted-body);
+      display: inline-flex;
+      transition: color 200ms ease;
+    }
+    .socials a:hover, .socials a:focus-visible { color: var(--ruby); }
+
+    /* ----- Reveal on scroll ----- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 600ms ease-out, transform 600ms ease-out;
+      will-change: opacity, transform;
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ----- A11y helpers ----- */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 8px;
+      background: var(--charcoal);
+      color: var(--cream);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      z-index: 100;
+    }
+    .skip-link:focus { left: 16px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Shared SVG defs: hexagonal ruby gem (the brand mark). -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="gem" viewBox="0 0 64 64">
+        <!-- Pointy-top hexagon body, darker ruby -->
+        <polygon points="32,2 60,17 60,47 32,62 4,47 4,17" fill="#9a1a33"/>
+        <!-- Bright "table" facet — the lighter pink highlight -->
+        <polygon points="18,12 46,12 46,38 18,38" fill="#d23a58"/>
+        <!-- Crisp facet edges -->
+        <g fill="none" stroke="#4f0e1f" stroke-width="1.2" stroke-linejoin="miter">
+          <polygon points="32,2 60,17 60,47 32,62 4,47 4,17"/>
+          <line x1="32" y1="2"  x2="32" y2="62"/>
+          <line x1="4"  y1="17" x2="60" y2="47"/>
+          <line x1="60" y1="17" x2="4"  y2="47"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- Reusable wordmark macro: <span class="wordmark">Rub<span class="i">i<svg ...></span></span> -->
+
+  <header class="nav" role="banner">
+    <div class="container nav-inner">
+      <a href="#top" class="nav-brand" aria-label="Rubi Ventures, home">
+        <span class="wordmark" aria-hidden="true">Rub<span class="i">i<svg class="gem-dot" aria-hidden="true" focusable="false"><use href="#gem"/></svg></span></span>
+        <span class="sr-only">Rubi Ventures</span>
+      </a>
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="#work">Work</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ===== Hero ===== -->
+    <section id="top" class="hero">
+      <div class="container">
+        <p class="eyebrow reveal">Rubi Ventures, LLC</p>
+        <h1 class="reveal">We build apps worth opening<span class="accent">.</span></h1>
+        <p class="lede reveal">
+          Thoughtful consumer apps, made one at a time.
+        </p>
+        <div class="hero-cta reveal">
+          <a href="#contact" class="btn">Get in touch</a>
+          <a href="#work" class="link">See what we're building&nbsp;→</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== About ===== -->
+    <section id="about" class="divided">
+      <div class="container grid grid-12">
+        <div class="col-4">
+          <p class="eyebrow reveal">About</p>
+        </div>
+        <div class="col-8">
+          <h2 class="reveal" style="max-width: 22ch;">A short list of apps, a careful hand.</h2>
+          <p class="reveal" style="margin-top: 32px; max-width: 62ch;">
+            Rubi Ventures builds consumer apps with the kind of restraint and detail that's hard to fake. We work on one or two things at a time, and we work on them properly.
+          </p>
+          <p class="reveal" style="margin-top: 20px; max-width: 62ch; color: var(--muted-body);">
+            Today we build apps. Tomorrow, whatever earns the same care.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Featured work ===== -->
+    <section id="work" class="divided">
+      <div class="container">
+        <p class="eyebrow reveal">Now building</p>
+        <div class="grid grid-12" style="margin-top: 24px; align-items: start;">
+          <div class="col-7">
+            <h2 class="reveal" style="margin-top: 8px;">The Clubhouse<span class="accent">.</span></h2>
+            <p class="serif reveal" style="margin-top: 14px; font-style: italic; font-size: clamp(20px, 2vw, 26px); line-height: 1.3;">
+              Golf, made social.
+            </p>
+            <p class="lede reveal" style="margin-top: 20px; max-width: 50ch;">
+              See where your friends played, what they shot, and the courses worth chasing next.
+            </p>
+            <ul class="bullets reveal" style="margin-top: 28px;">
+              <li>Rank every course you've played, head-to-head.</li>
+              <li>Track plays, scores, and the people you played with.</li>
+              <li>Follow friends and see what's worth chasing.</li>
+              <li>Discover where to play next, wherever you land.</li>
+            </ul>
+            <form id="subscribeForm" class="reveal" style="margin-top: 40px;" novalidate>
+              <p class="eyebrow" style="margin-bottom: 14px;">Get launch updates</p>
+              <div class="inline-form">
+                <label class="sr-only" for="subscribe-email">Email address</label>
+                <input id="subscribe-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+                <button type="submit" class="btn">Notify me</button>
+              </div>
+              <p class="form-status" id="subscribeStatus" role="status" aria-live="polite" hidden></p>
+            </form>
+          </div>
+          <div class="col-5 reveal">
+            <div class="device" role="img" aria-label="The Clubhouse app, in development">
+              <div class="device-inner">
+                <span class="device-notch" aria-hidden="true"></span>
+                <svg width="26" height="26" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
+                <p class="serif">The Clubhouse</p>
+                <p class="eyebrow">In development</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Contact ===== -->
+    <section id="contact" class="divided">
+      <div class="container grid grid-12">
+        <div class="col-5">
+          <p class="eyebrow reveal">Contact</p>
+          <h2 class="reveal" style="margin-top: 20px; max-width: 14ch;">Working on something worth building?</h2>
+          <p class="reveal" style="margin-top: 24px; max-width: 40ch; color: var(--muted-body);">
+            We read every note. Send a short message and we'll get back to you.
+          </p>
+        </div>
+        <div class="col-7">
+          <form id="contactForm" class="reveal" aria-label="Contact form" novalidate>
+            <div class="field">
+              <label class="eyebrow" for="contact-name">Name</label>
+              <input id="contact-name" type="text" name="name" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label class="eyebrow" for="contact-email">Email</label>
+              <input id="contact-email" type="email" name="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label class="eyebrow" for="contact-message">Message</label>
+              <textarea id="contact-message" name="message" required placeholder="Tell us a bit about what you're working on."></textarea>
+            </div>
+            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-top: 32px;">
+              <button type="submit" class="btn">Send message</button>
+              <p class="form-status" id="contactStatus" role="status" aria-live="polite" hidden></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <div class="container footer-row">
+      <div class="footer-meta">
+        <svg width="12" height="12" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
+        <span>Rubi Ventures, LLC&nbsp;&middot;&nbsp;&copy; 2026</span>
+      </div>
+      <ul class="socials">
+        <li>
+          <a href="#" aria-label="Rubi Ventures on X">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M18.244 2H21.5l-7.5 8.57L23 22h-6.84l-5.34-6.59L4.7 22H1.44l8.02-9.17L1 2h6.91l4.84 6.02L18.244 2Zm-1.2 18h1.85L7.04 4H5.07l11.974 16Z"/>
+            </svg>
+          </a>
+        </li>
+        <li>
+          <a href="#" aria-label="Rubi Ventures on LinkedIn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.05c.53-.95 1.83-1.95 3.77-1.95 4.04 0 4.78 2.66 4.78 6.12V21H17.6v-5.3c0-1.27-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.81V21H10V9Z"/>
+            </svg>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </footer>
+
+  <script>
+    /* =====================================================================
+       Behavior — reveal-on-scroll and form submission.
+       ===================================================================== */
+
+    // Subtle fade-and-rise on scroll: 600ms ease-out, 16px translateY.
+    // (Slightly longer than the 200ms spec — at 200ms the rise reads as a
+    // jitter rather than a settle. Adjust the transition above if desired.)
+    (function () {
+      var els = document.querySelectorAll('.reveal');
+      if (!('IntersectionObserver' in window)) {
+        els.forEach(function (el) { el.classList.add('is-visible'); });
+        return;
+      }
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+      els.forEach(function (el) { io.observe(el); });
+    })();
+
+    function setStatus(el, message, state) {
+      el.textContent = message;
+      if (state) { el.setAttribute('data-state', state); }
+      else        { el.removeAttribute('data-state'); }
+      el.hidden = !message;
+    }
+
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    /* -------------------------------------------------------------------
+       Launch-updates form (The Clubhouse).
+       Pick one path and replace SUBSCRIBE_ENDPOINT:
+
+         • Formspree (easiest with Squarespace; no server needed):
+             https://formspree.io/f/YOUR_FORM_ID
+         • ConvertKit:
+             https://api.convertkit.com/v3/forms/YOUR_FORM_ID/subscribe
+         • Resend audiences (requires a serverless function — e.g.
+             Vercel or a Cloudflare Worker — to keep the API key off
+             the client).
+
+       Leaving it empty (the default) simulates a successful submit so
+       the UI can be previewed without a backend.
+       ------------------------------------------------------------------- */
+    var SUBSCRIBE_ENDPOINT = '';
+
+    (function () {
+      var form    = document.getElementById('subscribeForm');
+      var status  = document.getElementById('subscribeStatus');
+      if (!form) return;
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data  = new FormData(form);
+        var email = String(data.get('email') || '').trim();
+        if (!EMAIL_RE.test(email)) {
+          setStatus(status, 'Please enter a valid email.', 'error');
+          return;
+        }
+        setStatus(status, 'Sending…', null);
+        submit(form, SUBSCRIBE_ENDPOINT, data).then(function () {
+          form.reset();
+          setStatus(status, "Thanks — we'll be in touch when it's ready.", 'ok');
+        }).catch(function () {
+          setStatus(status, 'Something went wrong. Try again in a moment.', 'error');
+        });
+      });
+    })();
+
+    /* -------------------------------------------------------------------
+       Contact form.
+       Recommended: Formspree to rubinsteindrew@gmail.com.
+
+         1. Sign in at https://formspree.io and create a new form
+            pointing at rubinsteindrew@gmail.com.
+         2. Copy the form's endpoint URL.
+         3. Paste it as CONTACT_ENDPOINT below.
+
+       Alternatives that work the same way: Getform, Basin, Netlify Forms,
+       or a serverless function using Resend / Postmark / SendGrid.
+       ------------------------------------------------------------------- */
+    var CONTACT_ENDPOINT = '';
+
+    (function () {
+      var form    = document.getElementById('contactForm');
+      var status  = document.getElementById('contactStatus');
+      if (!form) return;
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var data    = new FormData(form);
+        var name    = String(data.get('name')    || '').trim();
+        var email   = String(data.get('email')   || '').trim();
+        var message = String(data.get('message') || '').trim();
+        if (!name || !message || !EMAIL_RE.test(email)) {
+          setStatus(status, 'Please fill out all fields with a valid email.', 'error');
+          return;
+        }
+        setStatus(status, 'Sending…', null);
+        submit(form, CONTACT_ENDPOINT, data).then(function () {
+          form.reset();
+          setStatus(status, "Got it — we'll be in touch soon.", 'ok');
+        }).catch(function () {
+          setStatus(status, 'Something went wrong. Email rubinsteindrew@gmail.com directly.', 'error');
+        });
+      });
+    })();
+
+    // Generic submit: POSTs FormData to `endpoint` if set, otherwise
+    // resolves after a short delay (preview mode).
+    function submit(form, endpoint, data) {
+      if (!endpoint) {
+        return new Promise(function (resolve) { setTimeout(resolve, 450); });
+      }
+      return fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: data
+      }).then(function (res) {
+        if (!res.ok) throw new Error('submit failed');
+        return res;
+      });
+    }
+  </script>
+</body>
+</html>
