@@ -531,7 +531,10 @@
               <li>Follow friends and see what's worth chasing.</li>
               <li>Discover where to play next, wherever you land.</li>
             </ul>
-            <form id="subscribeForm" class="reveal" style="margin-top: 40px;" novalidate>
+            <p class="reveal" style="margin-top: 28px;">
+              <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="link">yourclubhouse.net&nbsp;→</a>
+            </p>
+            <form id="subscribeForm" class="reveal" style="margin-top: 36px;" novalidate>
               <p class="eyebrow" style="margin-bottom: 14px;">Get launch updates</p>
               <div class="inline-form">
                 <label class="sr-only" for="subscribe-email">Email address</label>
@@ -542,12 +545,15 @@
             </form>
           </div>
           <div class="col-5 reveal">
-            <div class="device" role="img" aria-label="The Clubhouse app, in development">
+            <div class="device" role="img" aria-label="The Clubhouse app">
               <div class="device-inner">
-                <span class="device-notch" aria-hidden="true"></span>
-                <svg width="26" height="26" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
-                <p class="serif">The Clubhouse</p>
-                <p class="eyebrow">In development</p>
+                <div class="device-fallback" aria-hidden="true">
+                  <span class="device-notch"></span>
+                  <svg width="26" height="26" focusable="false"><use href="#gem"/></svg>
+                  <p class="serif">The Clubhouse</p>
+                  <p class="eyebrow">In development</p>
+                </div>
+                <img src="assets/03_rank.png" alt="" class="device-screen" loading="lazy" decoding="async" onerror="this.style.display='none'">
               </div>
             </div>
           </div>
