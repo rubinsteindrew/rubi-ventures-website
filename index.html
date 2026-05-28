@@ -329,12 +329,27 @@
       border: 1px solid var(--hairline);
       border-radius: 28px;
       position: relative;
+      overflow: hidden;
+      background: var(--cream);
+    }
+    .device-fallback {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 24px;
       text-align: center;
+    }
+    .device-screen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
     }
     .device-notch {
       position: absolute;
@@ -346,8 +361,8 @@
       background: rgba(42, 38, 34, 0.15);
       border-radius: 999px;
     }
-    .device-inner .serif { font-size: 22px; margin-top: 14px; }
-    .device-inner .eyebrow { margin-top: 14px; }
+    .device-fallback .serif { font-size: 22px; margin-top: 14px; }
+    .device-fallback .eyebrow { margin-top: 14px; }
 
     /* ----- Footer ----- */
     footer {
