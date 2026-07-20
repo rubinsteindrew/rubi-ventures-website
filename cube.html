@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Cube — The Drinking Game</title>
+  <meta name="description" content="The Cube is a dead-simple offline drinking game. No accounts, no tracking, no ads — everything happens on your device. By Rubi Ventures, LLC." />
+  <meta name="theme-color" content="#241736" />
+  <link rel="icon" type="image/svg+xml" href="/assets/cube-favicon.svg" />
+  <meta property="og:title" content="The Cube — The Drinking Game" />
+  <meta property="og:description" content="A dead-simple offline drinking game. Nothing ever leaves your device." />
+  <meta property="og:type" content="website" />
+
+  <style>
+    /* =====================================================================
+       The Cube — product & privacy page for Rubi Ventures, LLC.
+       Casino-felt palette, echoing the app's own look.
+       ===================================================================== */
+    :root {
+      --felt:   #241736;
+      --felt2:  #2f1e46;
+      --line:   #4a3567;
+      --gold:   #e8b94c;
+      --gold-2: #d9a838;
+      --ink:    #f4eee2;
+      --muted:  rgba(244, 238, 226, 0.66);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(120% 80% at 50% 0%, var(--felt2), var(--felt) 60%) no-repeat;
+      background-attachment: fixed;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    img, svg { display: block; max-width: 100%; }
+    a { color: var(--gold); }
+    ::selection { background: rgba(232, 185, 76, 0.25); }
+    :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+
+    .wrap { max-width: 860px; margin: 0 auto; padding: 0 22px; }
+
+    /* ----- Top bar ----- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(36, 23, 54, 0.82);
+      backdrop-filter: saturate(160%) blur(10px);
+      -webkit-backdrop-filter: saturate(160%) blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 180ms ease;
+    }
+    .back:hover, .back:focus-visible { color: var(--ink); }
+    .topnav { display: flex; gap: 26px; }
+    .topnav a {
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 180ms ease;
+    }
+    .topnav a:hover, .topnav a:focus-visible { color: var(--gold); }
+    section[id] { scroll-margin-top: 76px; }
+
+    /* ----- Logo lockup ----- */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-weight: 800;
+      font-size: 26px;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+    .logo-tile {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: var(--felt2);
+      border: 1px solid var(--line);
+      flex: none;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-tile img { width: 100%; height: 100%; object-fit: cover; }
+    .mark { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; }
+    .mark i { width: 10px; height: 10px; background: var(--gold); border-radius: 2px; display: block; }
+
+    /* ----- Hero ----- */
+    .hero { padding: 56px 0 8px; }
+    .hero h1 { font-size: clamp(34px, 6vw, 52px); margin: 26px 0 10px; line-height: 1.05; }
+    .hero .tagline { font-size: clamp(18px, 2.2vw, 22px); color: var(--muted); font-style: italic; margin: 0 0 4px; }
+
+    .lede { font-size: 17px; color: var(--muted); max-width: 60ch; }
+
+    /* ----- Screenshot + points ----- */
+    .showcase {
+      display: grid;
+      gap: 40px;
+      grid-template-columns: 1fr;
+      align-items: center;
+      padding: 40px 0 8px;
+    }
+    @media (min-width: 720px) { .showcase { grid-template-columns: 1.1fr 0.9fr; } }
+
+    .device {
+      width: 100%;
+      max-width: 240px;
+      margin: 0 auto;
+      aspect-ratio: 9 / 19;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      padding: 8px;
+      background: var(--felt2);
+    }
+    .device-inner {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      position: relative;
+      overflow: hidden;
+      background: var(--felt);
+    }
+    .device-screen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    .device-fallback {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; padding: 24px; text-align: center;
+    }
+    .device-fallback .fb-name { font-weight: 700; color: var(--ink); }
+    .device-fallback .fb-sub { font-size: 12px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--gold); }
+
+    .points { list-style: none; padding: 0; margin: 0; }
+    .points li { position: relative; padding-left: 26px; margin: 0 0 14px; color: var(--ink); }
+    .points li::before {
+      content: ""; position: absolute; left: 0; top: 9px;
+      width: 9px; height: 9px; background: var(--gold); border-radius: 2px;
+    }
+
+    /* ----- Sections ----- */
+    h2 { font-size: 22px; color: var(--gold); margin: 40px 0 10px; }
+    p, li { font-size: 16px; }
+    .body p + p { margin-top: 14px; }
+    .date { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
+
+    .tldr {
+      background: rgba(232, 185, 76, 0.12);
+      border: 1px solid var(--gold);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin: 12px 0 4px;
+    }
+
+    .rule { height: 1px; background: var(--line); border: 0; margin: 48px 0; }
+
+    footer {
+      margin-top: 48px;
+      padding: 26px 0 60px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a class="back" href="/">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+          <path d="M9 2L4 7l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Rubi Ventures
+      </a>
+      <nav class="topnav" aria-label="The Cube">
+        <a href="#about">About</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- ===== Hero / About ===== -->
+    <section id="about" class="hero">
+      <div class="logo">
+        <span class="logo-tile">
+          <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'; this.parentNode.querySelector('.mark').style.display='grid';">
+          <span class="mark" style="display:none;"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        </span>
+        THE CUBE
+      </div>
+      <h1>The Cube</h1>
+      <p class="tagline">Want a fun game to play with your friends? Give this one a roll.</p>
+      <p class="lede" style="margin-top: 16px;">
+        The dead-simple drinking game my friends actually play. Add your players, pass the
+        phone, and let the cube decide. No accounts, no internet, no nonsense.
+      </p>
+    </section>
+
+    <!-- ===== Showcase ===== -->
+    <section class="showcase">
+      <ul class="points">
+        <li>Set up a game in seconds — just add player names.</li>
+        <li>Works entirely offline. Nothing ever leaves your phone.</li>
+        <li>No sign-up, no accounts, no tracking, no ads.</li>
+        <li>Rated 18+. Built for adults of legal drinking age.</li>
+      </ul>
+      <div class="device" role="img" aria-label="The Cube app screenshot">
+        <div class="device-inner">
+          <div class="device-fallback" aria-hidden="true">
+            <span class="mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="fb-name">The Cube</span>
+            <span class="fb-sub">In development</span>
+          </div>
+          <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async" onerror="this.style.display='none'">
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <!-- ===== Privacy ===== -->
+    <section id="privacy" class="body">
+      <h1 style="font-size: clamp(28px, 5vw, 40px);">Privacy Policy</h1>
+      <p class="date">Effective date: July 20, 2026</p>
+
+      <div class="tldr">
+        <strong>The short version:</strong> The Cube collects nothing. No accounts, no
+        tracking, no ads, no internet connection. Everything happens on your device.
+      </div>
+
+      <h2>Information we collect</h2>
+      <p><strong>None.</strong> The Cube does not collect, store, or transmit any personal
+      information. There is no sign-up, no account, and no login.</p>
+
+      <h2>Player names</h2>
+      <p>Any names you type in to set up a game are held only in the app's temporary memory
+      while you play. They are never saved after you close the app and are never sent
+      anywhere.</p>
+
+      <h2>No network, analytics, or advertising</h2>
+      <p>The Cube works entirely offline. It contains no analytics or tracking software, no
+      advertising, and no third-party SDKs. Nothing is shared with us or with any third
+      party, because nothing ever leaves your device.</p>
+
+      <h2>Children's privacy</h2>
+      <p>The Cube is a drinking game rated 18+ and is intended only for adults of legal
+      drinking age. It is not directed to children, and we do not knowingly collect
+      information from anyone.</p>
+
+      <h2>Changes to this policy</h2>
+      <p>If this policy ever changes, the updated version will be posted on this page with a
+      new effective date.</p>
+
+      <h2>Contact</h2>
+      <p>Questions about this policy? Email
+      <a href="mailto:contact@rubiventures.com">contact@rubiventures.com</a>.</p>
+    </section>
+
+    <footer>
+      <span>The Cube · Please drink responsibly.</span>
+      <span>Rubi Ventures, LLC · © 2026</span>
+    </footer>
+  </div>
+</body>
+</html>

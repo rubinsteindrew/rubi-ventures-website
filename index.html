@@ -436,6 +436,114 @@
       z-index: 100;
     }
     .skip-link:focus { left: 16px; }
+
+    /* =====================================================================
+       Per-app theming — a light touch of each product's own palette.
+       ===================================================================== */
+    :root {
+      --clubhouse:      #2f5d43;  /* Your Clubhouse — fairway green */
+      --cube-felt:      #241736;  /* The Cube — casino felt */
+      --cube-felt2:     #2f1e46;
+      --cube-gold:      #e8b94c;
+      --cube-ink:       #f4eee2;
+    }
+
+    /* ----- App logo tile ----- */
+    .app-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      overflow: hidden;
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .app-logo--clubhouse { background: var(--clubhouse); }
+    .app-logo--cube      { background: var(--cube-felt2); }
+    .app-head {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    /* ----- Nav dropdown (Apps) ----- */
+    .has-dropdown { position: relative; display: flex; align-items: center; }
+    .dropdown-toggle {
+      background: none;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      font: inherit;
+      font-size: 15px;
+      color: var(--charcoal);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 200ms ease;
+    }
+    .dropdown-toggle:hover,
+    .dropdown-toggle:focus-visible,
+    .dropdown-toggle[aria-expanded="true"] { color: var(--ruby); }
+    .dropdown-caret { width: 9px; height: 9px; transition: transform 220ms ease; }
+    .dropdown-toggle[aria-expanded="true"] .dropdown-caret { transform: rotate(180deg); }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 16px);
+      right: 0;
+      min-width: 248px;
+      background: var(--cream);
+      border: 1px solid var(--hairline);
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(42, 38, 34, 0.14);
+      padding: 8px;
+      list-style: none;
+      margin: 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
+    }
+    .has-dropdown[data-open="true"] .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+    /* Override the global `.nav ul { display:flex }` for the nested menu. */
+    .nav .dropdown-menu { display: block; }
+    .dropdown-menu li + li { margin-top: 2px; }
+    .nav .dropdown-menu a { display: flex; }
+    .dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--charcoal);
+      transition: background 160ms ease;
+    }
+    .dropdown-menu a:hover,
+    .dropdown-menu a:focus-visible { background: rgba(42, 38, 34, 0.055); }
+    .di-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      flex: none;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .di-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .di-logo--clubhouse { background: var(--clubhouse); }
+    .di-logo--cube      { background: var(--cube-felt2); }
+    .di-name { font-size: 15px; line-height: 1.25; color: var(--charcoal); }
+    .di-desc { font-size: 12px; line-height: 1.3; color: var(--muted-body); }
+    .di-name .di-ext { font-size: 11px; opacity: 0.6; }
   </style>
 </head>
 <body>
@@ -470,8 +578,40 @@
       </a>
       <nav aria-label="Primary">
         <ul>
-          <li><a href="#work">Work</a></li>
           <li><a href="#about">About</a></li>
+          <li class="has-dropdown" id="appsDropdown">
+            <button type="button" class="dropdown-toggle" id="appsToggle"
+                    aria-expanded="false" aria-controls="appsMenu" aria-haspopup="true">
+              Apps
+              <svg class="dropdown-caret" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <ul class="dropdown-menu" id="appsMenu" role="menu" aria-labelledby="appsToggle">
+              <li role="none">
+                <a href="https://yourclubhouse.net" target="_blank" rel="noopener" role="menuitem">
+                  <span class="di-logo di-logo--clubhouse">
+                    <img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'">
+                  </span>
+                  <span>
+                    <span class="di-name">Your Clubhouse <span class="di-ext">↗</span></span><br>
+                    <span class="di-desc">Golf, made social</span>
+                  </span>
+                </a>
+              </li>
+              <li role="none">
+                <a href="/cube" role="menuitem">
+                  <span class="di-logo di-logo--cube">
+                    <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
+                  </span>
+                  <span>
+                    <span class="di-name">The Cube</span><br>
+                    <span class="di-desc">The drinking game</span>
+                  </span>
+                </a>
+              </li>
+            </ul>
+          </li>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
@@ -518,9 +658,14 @@
         <p class="eyebrow reveal">Now building</p>
         <div class="grid grid-12" style="margin-top: 24px; align-items: start;">
           <div class="col-7">
-            <h2 class="reveal" style="margin-top: 8px;">The Clubhouse<span class="accent">.</span></h2>
+            <div class="app-head reveal" style="margin-top: 8px;">
+              <span class="app-logo app-logo--clubhouse">
+                <img src="assets/clubhouse-logo.png" alt="Your Clubhouse logo" onerror="this.style.display='none'">
+              </span>
+              <h2>Your Clubhouse<span class="accent">.</span></h2>
+            </div>
             <p class="serif reveal" style="margin-top: 14px; font-style: italic; font-size: clamp(20px, 2vw, 26px); line-height: 1.3;">
-              Golf, made social.
+              Your Course, Ranked.
             </p>
             <p class="lede reveal" style="margin-top: 20px; max-width: 50ch;">
               See where your friends played, what they shot, and the courses worth chasing next.
@@ -531,29 +676,72 @@
               <li>Follow friends and see what's worth chasing.</li>
               <li>Discover where to play next, wherever you land.</li>
             </ul>
-            <p class="reveal" style="margin-top: 28px;">
-              <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="link">yourclubhouse.net&nbsp;→</a>
-            </p>
-            <form id="subscribeForm" class="reveal" style="margin-top: 36px;" novalidate>
-              <p class="eyebrow" style="margin-bottom: 14px;">Get launch updates</p>
-              <div class="inline-form">
-                <label class="sr-only" for="subscribe-email">Email address</label>
-                <input id="subscribe-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
-                <button type="submit" class="btn">Notify me</button>
-              </div>
-              <p class="form-status" id="subscribeStatus" role="status" aria-live="polite" hidden></p>
-            </form>
+            <div class="hero-cta reveal" style="margin-top: 32px;">
+              <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="btn">Visit yourclubhouse.net</a>
+            </div>
           </div>
           <div class="col-5 reveal">
-            <div class="device" role="img" aria-label="The Clubhouse app">
+            <div class="device" role="img" aria-label="Your Clubhouse app">
               <div class="device-inner">
                 <div class="device-fallback" aria-hidden="true">
                   <span class="device-notch"></span>
-                  <svg width="26" height="26" focusable="false"><use href="#gem"/></svg>
-                  <p class="serif">The Clubhouse</p>
+                  <span class="app-logo app-logo--clubhouse" style="width:44px;height:44px;border-radius:12px;">
+                    <img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'">
+                  </span>
+                  <p class="serif">Your Clubhouse</p>
                   <p class="eyebrow">In development</p>
                 </div>
-                <img src="assets/03_rank.png" alt="" class="device-screen" loading="lazy" decoding="async" onerror="this.style.display='none'">
+                <img src="assets/clubhouse-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
+                     onerror="this.onerror=null; this.src='assets/03_rank.png';">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== The Cube ===== -->
+    <section id="cube" class="divided">
+      <div class="container">
+        <div class="grid grid-12" style="align-items: start;">
+          <div class="col-7">
+            <p class="eyebrow reveal">Also building</p>
+            <div class="app-head reveal" style="margin-top: 22px;">
+              <span class="app-logo app-logo--cube">
+                <img src="assets/cube-logo.png" alt="The Cube logo" onerror="this.style.display='none'">
+              </span>
+              <h2>The Cube<span class="accent">.</span></h2>
+            </div>
+            <p class="serif reveal" style="margin-top: 14px; font-style: italic; font-size: clamp(20px, 2vw, 26px); line-height: 1.3;">
+              Want a fun game to play with your friends? Give this one a roll.
+            </p>
+            <p class="lede reveal" style="margin-top: 20px; max-width: 50ch;">
+              The dead-simple drinking game my friends actually play. No accounts, no
+              internet, no nonsense — just you, your table, and the roll of the cube.
+            </p>
+            <ul class="bullets reveal" style="margin-top: 28px;">
+              <li>Add your players and start in seconds.</li>
+              <li>Works entirely offline — nothing ever leaves your phone.</li>
+              <li>No sign-up, no tracking, no ads.</li>
+              <li>Built for adults of legal drinking age. Please drink responsibly.</li>
+            </ul>
+            <div class="hero-cta reveal" style="margin-top: 36px;">
+              <a href="/cube" class="btn">About &amp; privacy</a>
+              <a href="/cube#privacy" class="link">Privacy policy&nbsp;→</a>
+            </div>
+          </div>
+          <div class="col-5 reveal">
+            <div class="device" role="img" aria-label="The Cube app">
+              <div class="device-inner">
+                <div class="device-fallback" aria-hidden="true">
+                  <span class="device-notch"></span>
+                  <span class="app-logo app-logo--cube" style="width:44px;height:44px;border-radius:12px;">
+                    <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
+                  </span>
+                  <p class="serif">The Cube</p>
+                  <p class="eyebrow">In development</p>
+                </div>
+                <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async" onerror="this.style.display='none'">
               </div>
             </div>
           </div>
@@ -629,6 +817,32 @@
       els.forEach(function (el) { io.observe(el); });
     })();
 
+    // Apps dropdown: click to toggle, closes on outside-click, Escape, or
+    // selecting an item. Keyboard-accessible via the native <button>.
+    (function () {
+      var wrap   = document.getElementById('appsDropdown');
+      var toggle = document.getElementById('appsToggle');
+      if (!wrap || !toggle) return;
+
+      function open()  { wrap.setAttribute('data-open', 'true');  toggle.setAttribute('aria-expanded', 'true'); }
+      function close() { wrap.removeAttribute('data-open');        toggle.setAttribute('aria-expanded', 'false'); }
+      function isOpen() { return wrap.getAttribute('data-open') === 'true'; }
+
+      toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        isOpen() ? close() : open();
+      });
+      document.addEventListener('click', function (e) {
+        if (isOpen() && !wrap.contains(e.target)) close();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && isOpen()) { close(); toggle.focus(); }
+      });
+      wrap.addEventListener('click', function (e) {
+        if (e.target.closest('a')) close();
+      });
+    })();
+
     function setStatus(el, message, state) {
       el.textContent = message;
       if (state) { el.setAttribute('data-state', state); }
@@ -637,45 +851,6 @@
     }
 
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    /* -------------------------------------------------------------------
-       Launch-updates form (The Clubhouse).
-       Pick one path and replace SUBSCRIBE_ENDPOINT:
-
-         • Formspree (easiest with Squarespace; no server needed):
-             https://formspree.io/f/YOUR_FORM_ID
-         • ConvertKit:
-             https://api.convertkit.com/v3/forms/YOUR_FORM_ID/subscribe
-         • Resend audiences (requires a serverless function — e.g.
-             Vercel or a Cloudflare Worker — to keep the API key off
-             the client).
-
-       Leaving it empty (the default) simulates a successful submit so
-       the UI can be previewed without a backend.
-       ------------------------------------------------------------------- */
-    var SUBSCRIBE_ENDPOINT = 'https://formspree.io/f/xjgzlkwp';
-
-    (function () {
-      var form    = document.getElementById('subscribeForm');
-      var status  = document.getElementById('subscribeStatus');
-      if (!form) return;
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        var data  = new FormData(form);
-        var email = String(data.get('email') || '').trim();
-        if (!EMAIL_RE.test(email)) {
-          setStatus(status, 'Please enter a valid email.', 'error');
-          return;
-        }
-        setStatus(status, 'Sending…', null);
-        submit(form, SUBSCRIBE_ENDPOINT, data).then(function () {
-          form.reset();
-          setStatus(status, "Thanks — we'll be in touch when it's ready.", 'ok');
-        }).catch(function () {
-          setStatus(status, 'Something went wrong. Try again in a moment.', 'error');
-        });
-      });
-    })();
 
     /* -------------------------------------------------------------------
        Contact form.
