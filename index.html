@@ -352,6 +352,15 @@
       object-position: center top;
       display: block;
     }
+    /* Covers the iOS status bar (time/battery/wifi) baked into the
+       Your Clubhouse screenshot, blending into the app's green header. */
+    .device-statusfill {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 7%;
+      background: #375B42;
+      z-index: 2;
+    }
     .device-notch {
       position: absolute;
       top: 14px;
@@ -693,6 +702,7 @@
                 </div>
                 <img src="assets/clubhouse-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
                      onerror="this.onerror=null; this.src='assets/03_rank.png';">
+                <span class="device-statusfill" aria-hidden="true"></span>
               </div>
             </div>
           </div>
