@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Before any CSS loads the browser paints its default canvas. Without
+       this it picks white, which flashes on every load while the blocking
+       font stylesheet is still in flight. -->
+  <meta name="color-scheme" content="dark">
   <title>The Cube — The Drinking Game</title>
   <meta name="description" content="The Cube is a dead-simple offline drinking game. Nine piles, three by three — call higher or lower, three in a row to pass it on. No accounts, no tracking, no ads. By Rubi Ventures, LLC.">
   <meta name="theme-color" content="#0B0713">
@@ -11,9 +15,20 @@
   <meta property="og:description" content="Nine piles, three by three. Call higher or lower. Three in a row and you're out.">
   <meta property="og:type" content="website">
 
+  <!-- Paint dark on the very first frame. This tiny block is inline and
+       comes before anything external, so it applies with no network wait. -->
+  <style>html,body{background:#0B0713;}</style>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
+  <!-- Loaded non-blocking. A plain external stylesheet in <head> holds up
+       first paint until it arrives, and until then the browser shows its
+       own default canvas — which is white. That was the flash. media="print"
+       makes this a non-blocking fetch; onload promotes it once it lands, so
+       the page paints immediately in the fallback face and swaps. -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap"></noscript>
 
   <style>
     /* =====================================================================
@@ -70,7 +85,12 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      color-scheme: dark;      /* also darkens scrollbars and form controls */
+      background: #0B0713;
+    }
     body {
       margin: 0;
       min-height: 100vh;
@@ -527,6 +547,9 @@
       background: var(--felt);
     }
     .device-screen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+    /* The Cube capture is cropped in the asset itself (status bar removed) and
+       carries this exact ratio, so it fills the frame with nothing trimmed. */
+    .device--cube { aspect-ratio: 660 / 1368; }
     .device-fallback {
       position: absolute;
       inset: 0;
@@ -654,7 +677,7 @@
           <li><span class="rules-num"></span><b>Nine cards go down, three by three.</b> Each one is the top of its own pile.</li>
           <li><span class="rules-num"></span><b>Pick any pile and call it</b> — higher or lower than the card showing.</li>
           <li><span class="rules-num"></span><b>The next card lands on that pile.</b> Right, and you're one closer. The pile gets deeper either way.</li>
-          <li><span class="rules-num"></span><b>Miss, and you drink</b> for as many seconds as there are cards in that pile. Then you're still up — keep calling.</li>
+          <li><span class="rules-num"></span><b>Miss, and you drink</b> for as many seconds as there are cards in that pile — double if it comes up the same card. Then you're still up: keep calling.</li>
           <li><span class="rules-num"></span><b>Three correct back-to-back and you're out.</b> Pass the phone. The piles stay where they are for the next player.</li>
         </ol>
         <p class="lede" style="margin-top:26px;">
@@ -671,7 +694,7 @@
           <li>Rated 18+. Built for adults of legal drinking age.</li>
         </ul>
         <div class="rise" data-d="2" style="margin-top:40px;">
-          <div class="device" role="img" aria-label="The Cube app on a phone">
+          <div class="device device--cube" role="img" aria-label="The Cube app on a phone">
             <div class="device-inner">
               <div class="device-fallback" aria-hidden="true">
                 <span class="logo-tile" style="width:44px;height:44px;border-radius:12px;">
@@ -680,7 +703,9 @@
                 <span class="nm">The Cube</span>
                 <span class="st">In development</span>
               </div>
-              <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
+              <img src="assets/cube-screenshot.webp"
+                       alt="The Cube app: nine card piles in a three-by-three grid, each showing its top card with higher and lower buttons beneath, above a streak indicator"
+                       class="device-screen" loading="lazy" decoding="async"
                    onerror="this.style.display='none'">
             </div>
           </div>

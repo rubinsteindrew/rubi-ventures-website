@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Before any CSS loads the browser paints its default canvas. Without
+       this it picks white, which flashes on every load while the blocking
+       font stylesheet is still in flight. -->
+  <meta name="color-scheme" content="dark">
   <title>Rubi Ventures — We build apps worth opening</title>
   <meta name="description" content="Rubi Ventures, LLC builds thoughtful consumer apps, cut one at a time. Every app is a facet of the same stone.">
   <meta name="theme-color" content="#08060A">
@@ -11,9 +15,20 @@
   <meta property="og:description" content="We build apps worth opening. Every app is a facet of the same stone.">
   <meta property="og:type" content="website">
 
+  <!-- Paint dark on the very first frame. This tiny block is inline and
+       comes before anything external, so it applies with no network wait. -->
+  <style>html,body{background:#08060A;}</style>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
+  <!-- Loaded non-blocking. A plain external stylesheet in <head> holds up
+       first paint until it arrives, and until then the browser shows its
+       own default canvas — which is white. That was the flash. media="print"
+       makes this a non-blocking fetch; onload promotes it once it lands, so
+       the page paints immediately in the fallback face and swaps. -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap"></noscript>
 
   <style>
     /* =====================================================================
@@ -81,7 +96,12 @@
     @media (min-width: 768px) { :root { --gut: 40px; } }
 
     *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      color-scheme: dark;      /* also darkens scrollbars and form controls */
+      background: #08060A;
+    }
     body {
       margin: 0;
       background: var(--void);
@@ -841,6 +861,10 @@
       background: linear-gradient(160deg, rgba(240, 234, 231, 0.09), rgba(240, 234, 231, 0.02));
       box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 60px -20px var(--app);
     }
+    /* The Cube capture is cropped in the asset itself (status bar removed) and
+       carries this exact ratio, so it fills the frame with nothing trimmed. */
+    .device--cube { aspect-ratio: 660 / 1368; }
+    .device--club { aspect-ratio: 672 / 1392; }
     .device-inner {
       position: relative;
       width: 100%; height: 100%;
@@ -854,15 +878,6 @@
       width: 100%; height: 100%;
       object-fit: cover;
       object-position: center top;
-    }
-    /* Masks the iOS status bar baked into the Your Clubhouse capture,
-       blending into that app's green header. */
-    .device-statusfill {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 7%;
-      z-index: 2;
-      background: #375B42;
     }
     .device-fallback {
       position: absolute;
@@ -1259,17 +1274,17 @@
               </div>
             </div>
             <div>
-              <div class="device">
+              <div class="device device--club">
                 <div class="device-inner">
                   <div class="device-fallback" aria-hidden="true">
                     <span class="tile"><img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'"></span>
                     <span class="nm">Your Clubhouse</span>
                     <span class="st">In development</span>
                   </div>
-                  <img src="assets/clubhouse-screenshot.png" alt="The Your Clubhouse app showing a ranked list of golf courses"
+                  <img src="assets/clubhouse-screenshot.webp"
+                       alt="The Your Clubhouse app showing a feed of rounds played, with scores, courses and a photo of a golf course at dusk"
                        class="device-screen" loading="lazy" decoding="async"
-                       onerror="this.onerror=null; this.src='assets/03_rank.png';">
-                  <span class="device-statusfill" aria-hidden="true"></span>
+                       onerror="this.style.display='none'">
                 </div>
               </div>
             </div>
@@ -1310,14 +1325,16 @@
               </div>
             </div>
             <div>
-              <div class="device">
+              <div class="device device--cube">
                 <div class="device-inner">
                   <div class="device-fallback" aria-hidden="true">
                     <span class="tile"><img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'"></span>
                     <span class="nm">The Cube</span>
                     <span class="st">In development</span>
                   </div>
-                  <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
+                  <img src="assets/cube-screenshot.webp"
+                       alt="The Cube app: nine card piles in a three-by-three grid, each showing its top card with higher and lower buttons beneath, above a streak indicator"
+                       class="device-screen" loading="lazy" decoding="async"
                        onerror="this.style.display='none'">
                 </div>
               </div>
