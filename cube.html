@@ -1,204 +1,502 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Cube — The Drinking Game</title>
-  <meta name="description" content="The Cube is a dead-simple offline drinking game. No accounts, no tracking, no ads — everything happens on your device. By Rubi Ventures, LLC." />
-  <meta name="theme-color" content="#241736" />
-  <link rel="icon" type="image/svg+xml" href="/assets/cube-favicon.svg" />
-  <meta property="og:title" content="The Cube — The Drinking Game" />
-  <meta property="og:description" content="A dead-simple offline drinking game. Nothing ever leaves your device." />
-  <meta property="og:type" content="website" />
+  <meta name="description" content="The Cube is a dead-simple offline drinking game. No accounts, no tracking, no ads — everything happens on your device. By Rubi Ventures, LLC.">
+  <meta name="theme-color" content="#0B0713">
+  <link rel="icon" type="image/svg+xml" href="/assets/cube-favicon.svg">
+  <meta property="og:title" content="The Cube — The Drinking Game">
+  <meta property="og:description" content="A dead-simple offline drinking game. Nothing ever leaves your device.">
+  <meta property="og:type" content="website">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
 
   <style>
     /* =====================================================================
        The Cube — product & privacy page for Rubi Ventures, LLC.
-       Casino-felt palette, echoing the app's own look.
+
+       Shares the parent site's type system and dark ground so the two read
+       as one studio, but swaps ruby light for the app's own casino felt and
+       gold. The centrepiece is a real die: a CSS 3D cube you can drag,
+       flick and roll. On release it decays and snaps to the nearest
+       face-aligned orientation, so it always lands on a number.
+
+       Self-contained by design — no build step, no dependencies.
        ===================================================================== */
+
     :root {
-      --felt:   #241736;
-      --felt2:  #2f1e46;
-      --line:   #4a3567;
-      --gold:   #e8b94c;
-      --gold-2: #d9a838;
-      --ink:    #f4eee2;
-      --muted:  rgba(244, 238, 226, 0.66);
+      --void:      #0B0713;
+      --felt:      #1A0F2B;
+      --felt-2:    #241636;
+      --line:      rgba(244, 238, 226, 0.11);
+      --line-lit:  rgba(244, 238, 226, 0.22);
+      --gold:      #E8B94C;
+      --gold-lit:  #FFD979;
+      --gold-deep: #8A6412;
+      --ruby:      #E11D3C;
+      --ink:       #F4EEE2;
+      --ink-dim:   rgba(244, 238, 226, 0.66);
+      --ink-faint: rgba(244, 238, 226, 0.42);
+
+      --display: 'Bodoni Moda', 'Didot', 'Times New Roman', Georgia, serif;
+      --ui:      'Inter Tight', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --ease:    cubic-bezier(.16, 1, .3, 1);
     }
+
     *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
-      background: radial-gradient(120% 80% at 50% 0%, var(--felt2), var(--felt) 60%) no-repeat;
-      background-attachment: fixed;
+      background: var(--void);
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--ui);
+      font-size: 17px;
       line-height: 1.65;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
     }
-    img, svg { display: block; max-width: 100%; }
+    @media (max-width: 640px) { body { font-size: 16px; } }
+    img, svg, canvas { display: block; max-width: 100%; }
     a { color: var(--gold); }
-    ::selection { background: rgba(232, 185, 76, 0.25); }
-    :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+    ::selection { background: rgba(232, 185, 76, 0.30); color: #fff; }
+    :focus { outline: none; }
+    :focus-visible { outline: 1px solid var(--gold-lit); outline-offset: 4px; }
 
-    .wrap { max-width: 860px; margin: 0 auto; padding: 0 22px; }
+    /* ----- Atmosphere ----- */
+    .atmos {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(72% 52% at 50% -8%, rgba(90, 46, 140, 0.42), transparent 70%),
+        radial-gradient(46% 38% at 92% 26%, rgba(232, 185, 76, 0.11), transparent 72%),
+        radial-gradient(60% 44% at 4% 84%, rgba(90, 46, 140, 0.24), transparent 70%);
+    }
+    .grain {
+      position: fixed;
+      inset: -50%;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    #shardCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    /* ----- Layout ----- */
+    .wrap {
+      position: relative;
+      z-index: 2;
+      max-width: 940px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    @media (min-width: 768px) { .wrap { padding: 0 40px; } }
+    section[id] { scroll-margin-top: 84px; }
+
+    .rule {
+      position: relative;
+      height: 1px;
+      border: 0;
+      margin: 72px 0;
+      background: linear-gradient(90deg, transparent, var(--line) 12%, var(--line-lit) 50%, var(--line) 88%, transparent);
+    }
+
+    /* ----- Type ----- */
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--display);
+      font-weight: 400;
+      font-variation-settings: 'opsz' 96;
+      line-height: 1.04;
+      letter-spacing: -0.015em;
+    }
+    h1 { font-size: clamp(46px, 8vw, 92px); }
+    h2 { font-size: clamp(24px, 3vw, 34px); font-variation-settings: 'opsz' 40; color: var(--gold); }
+    h3 { font-size: clamp(21px, 2.2vw, 26px); font-variation-settings: 'opsz' 40; }
+    p { margin: 0; }
+    .body p + p { margin-top: 16px; }
+    .body h2 { margin: 44px 0 12px; }
+    .body p, .body li { color: var(--ink-dim); }
+    .body strong { color: var(--ink); font-weight: 500; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      color: var(--ink-faint);
+    }
+    .eyebrow::before {
+      content: "";
+      width: 5px; height: 5px;
+      flex: none;
+      background: var(--gold);
+      transform: rotate(45deg);
+      box-shadow: 0 0 10px var(--gold);
+    }
+    .tagline {
+      font-family: var(--display);
+      font-style: italic;
+      font-variation-settings: 'opsz' 40;
+      font-size: clamp(20px, 2.3vw, 27px);
+      line-height: 1.3;
+      margin-top: 18px;
+    }
+    .lede { font-size: clamp(17px, 1.4vw, 19px); color: var(--ink-dim); max-width: 52ch; margin-top: 20px; }
+    .date { color: var(--ink-faint); font-size: 14px; margin-top: 10px; }
 
     /* ----- Top bar ----- */
     .topbar {
       position: sticky;
       top: 0;
-      z-index: 10;
-      background: rgba(36, 23, 54, 0.82);
-      backdrop-filter: saturate(160%) blur(10px);
-      -webkit-backdrop-filter: saturate(160%) blur(10px);
+      z-index: 30;
+      background: rgba(11, 7, 19, 0.76);
+      backdrop-filter: blur(14px) saturate(150%);
+      -webkit-backdrop-filter: blur(14px) saturate(150%);
       border-bottom: 1px solid var(--line);
     }
     .topbar-inner {
-      max-width: 860px;
+      max-width: 940px;
       margin: 0 auto;
-      padding: 14px 22px;
+      padding: 0 24px;
+      height: 62px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
     }
+    @media (min-width: 768px) { .topbar-inner { padding: 0 40px; } }
     .back {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       font-size: 14px;
       text-decoration: none;
-      color: var(--muted);
-      transition: color 180ms ease;
+      color: var(--ink-dim);
+      transition: color 220ms ease;
     }
     .back:hover, .back:focus-visible { color: var(--ink); }
+    .back .gm { width: 12px; height: 12px; flex: none; filter: drop-shadow(0 0 6px rgba(225, 29, 60, 0.8)); }
     .topnav { display: flex; gap: 26px; }
     .topnav a {
       font-size: 14px;
       text-decoration: none;
-      color: var(--muted);
-      transition: color 180ms ease;
+      color: var(--ink-dim);
+      transition: color 220ms ease;
     }
     .topnav a:hover, .topnav a:focus-visible { color: var(--gold); }
-    section[id] { scroll-margin-top: 76px; }
 
-    /* ----- Logo lockup ----- */
-    .logo {
-      display: flex;
+    /* ----- Buttons ----- */
+    .btn {
+      position: relative;
+      display: inline-flex;
       align-items: center;
-      gap: 16px;
-      font-weight: 800;
-      font-size: 26px;
-      color: var(--gold);
-      letter-spacing: 1px;
-    }
-    .logo-tile {
-      width: 64px;
-      height: 64px;
-      border-radius: 16px;
-      background: var(--felt2);
-      border: 1px solid var(--line);
-      flex: none;
+      gap: 10px;
+      padding: 15px 28px;
+      border: 1px solid var(--gold);
+      background: transparent;
+      color: var(--ink);
+      font: 500 13px/1 var(--ui);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
       overflow: hidden;
+      clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+      transition: color 240ms ease;
+    }
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: var(--gold);
+      transform: translateY(101%);
+      transition: transform 420ms var(--ease);
+    }
+    .btn:hover, .btn:focus-visible { color: var(--void); }
+    .btn:hover::before, .btn:focus-visible::before { transform: none; }
+    .btn.solid { background: var(--gold); color: #241636; border-color: transparent; }
+    .btn.solid::before { background: var(--gold-lit); }
+    .btn.solid:hover, .btn.solid:focus-visible { color: #241636; }
+
+    /* ----- Hero ----- */
+    .hero { padding: 72px 0 8px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 56px;
+      align-items: center;
+    }
+    @media (min-width: 860px) {
+      .hero { padding: 104px 0 8px; }
+      .hero-grid { grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: 40px; }
+    }
+    .lockup { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+    .logo-tile {
+      width: 60px; height: 60px;
+      flex: none;
+      border-radius: 15px;
+      overflow: hidden;
+      background: var(--felt-2);
+      border: 1px solid var(--line);
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .logo-tile img { width: 100%; height: 100%; object-fit: cover; }
-    .mark { display: grid; grid-template-columns: repeat(3, 10px); gap: 3px; }
-    .mark i { width: 10px; height: 10px; background: var(--gold); border-radius: 2px; display: block; }
+    .logo-word {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: center; margin-top: 38px; }
 
-    /* ----- Hero ----- */
-    .hero { padding: 56px 0 8px; }
-    .hero h1 { font-size: clamp(34px, 6vw, 52px); margin: 26px 0 10px; line-height: 1.05; }
-    .hero .tagline { font-size: clamp(18px, 2.2vw, 22px); color: var(--muted); font-style: italic; margin: 0 0 4px; }
+    /* ----- The die -----------------------------------------------------
+       Scene sets the perspective; .die carries the live rotation; each
+       face is pushed out half a cube along its own axis.
+       ------------------------------------------------------------------ */
+    .table { position: relative; display: grid; place-items: center; padding: 24px 0 8px; }
+    .scene {
+      --sz: 168px;
+      width: var(--sz);
+      height: var(--sz);
+      perspective: 900px;
+      touch-action: none;
+      cursor: grab;
+    }
+    .scene.grabbing { cursor: grabbing; }
+    @media (max-width: 520px) { .scene { --sz: 140px; } }
 
-    .lede { font-size: 17px; color: var(--muted); max-width: 60ch; }
+    /* A fixed viewing angle. The die itself snaps to quarter turns, which
+       would otherwise leave it perfectly face-on and reading as a flat
+       square; this static tilt keeps two side faces in view so it still
+       looks like a die sitting on a table. */
+    .tilt {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transform: rotateX(-15deg) rotateY(-24deg);
+    }
 
-    /* ----- Screenshot + points ----- */
+    .die {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 14%;
+      gap: 6%;
+      border-radius: 16px;
+      background:
+        radial-gradient(120% 120% at 24% 18%, rgba(244, 238, 226, 0.16), transparent 62%),
+        linear-gradient(150deg, var(--felt-2), var(--felt));
+      border: 1px solid rgba(232, 185, 76, 0.34);
+      box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.55);
+      backface-visibility: visible;
+    }
+    .pip {
+      align-self: center;
+      justify-self: center;
+      width: 68%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 30%, var(--gold-lit), var(--gold) 52%, var(--gold-deep));
+      box-shadow: 0 0 12px rgba(232, 185, 76, 0.55);
+    }
+    /* Pip slots, addressed by grid position so each face is just a list. */
+    .p11 { grid-area: 1 / 1; } .p13 { grid-area: 1 / 3; }
+    .p22 { grid-area: 2 / 2; }
+    .p31 { grid-area: 3 / 1; } .p33 { grid-area: 3 / 3; }
+    .p21 { grid-area: 2 / 1; } .p23 { grid-area: 2 / 3; }
+    .p12 { grid-area: 1 / 2; } .p32 { grid-area: 3 / 2; }
+
+    /* A soft pool of light under the die, so it isn't floating in a void. */
+    .shadow {
+      position: absolute;
+      left: 50%;
+      bottom: -22px;
+      width: 200px; height: 34px;
+      transform: translateX(-50%);
+      background: radial-gradient(closest-side, rgba(232, 185, 76, 0.20), transparent);
+      filter: blur(6px);
+      pointer-events: none;
+    }
+
+    .readout {
+      margin-top: 34px;
+      min-height: 76px;
+      text-align: center;
+    }
+    .readout-num {
+      font-family: var(--display);
+      font-variation-settings: 'opsz' 96;
+      font-size: 46px;
+      line-height: 1;
+      color: var(--gold);
+    }
+    .readout-say {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-top: 10px;
+      min-height: 1.4em;
+    }
+    .die-hint {
+      margin-top: 6px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+
+    /* ----- Points + device ----- */
     .showcase {
       display: grid;
-      gap: 40px;
+      gap: 48px;
       grid-template-columns: 1fr;
       align-items: center;
-      padding: 40px 0 8px;
     }
-    @media (min-width: 720px) { .showcase { grid-template-columns: 1.1fr 0.9fr; } }
+    @media (min-width: 760px) { .showcase { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 56px; } }
+    .points { list-style: none; padding: 0; margin: 0; }
+    .points li {
+      position: relative;
+      padding-left: 26px;
+      color: var(--ink-dim);
+      font-size: 16px;
+    }
+    .points li + li { margin-top: 14px; }
+    .points li::before {
+      content: "";
+      position: absolute;
+      left: 2px; top: 0.62em;
+      width: 7px; height: 7px;
+      background: var(--gold);
+      transform: rotate(45deg);
+      box-shadow: 0 0 10px var(--gold);
+    }
 
     .device {
       width: 100%;
-      max-width: 240px;
+      max-width: 236px;
       margin: 0 auto;
       aspect-ratio: 9 / 19;
-      border: 1px solid var(--line);
+      padding: 7px;
+      border: 1px solid var(--line-lit);
       border-radius: 34px;
-      padding: 8px;
-      background: var(--felt2);
+      background: linear-gradient(160deg, rgba(244, 238, 226, 0.10), rgba(244, 238, 226, 0.02));
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 60px -22px var(--gold);
     }
     .device-inner {
-      width: 100%;
-      height: 100%;
-      border: 1px solid var(--line);
-      border-radius: 26px;
       position: relative;
+      width: 100%; height: 100%;
       overflow: hidden;
+      border-radius: 27px;
       background: var(--felt);
     }
     .device-screen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
     .device-fallback {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px; padding: 24px; text-align: center;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+      padding: 22px;
     }
-    .device-fallback .fb-name { font-weight: 700; color: var(--ink); }
-    .device-fallback .fb-sub { font-size: 12px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--gold); }
+    .device-fallback .nm { font-family: var(--display); font-size: 20px; }
+    .device-fallback .st { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
 
-    .points { list-style: none; padding: 0; margin: 0; }
-    .points li { position: relative; padding-left: 26px; margin: 0 0 14px; color: var(--ink); }
-    .points li::before {
-      content: ""; position: absolute; left: 0; top: 9px;
-      width: 9px; height: 9px; background: var(--gold); border-radius: 2px;
-    }
-
-    /* ----- Sections ----- */
-    h2 { font-size: 22px; color: var(--gold); margin: 40px 0 10px; }
-    p, li { font-size: 16px; }
-    .body p + p { margin-top: 14px; }
-    .date { color: var(--muted); font-size: 14px; margin: 0 0 8px; }
-
+    /* ----- Privacy ----- */
     .tldr {
-      background: rgba(232, 185, 76, 0.12);
-      border: 1px solid var(--gold);
-      border-radius: 14px;
-      padding: 16px 20px;
-      margin: 12px 0 4px;
+      margin-top: 20px;
+      padding: 20px 24px;
+      background: rgba(232, 185, 76, 0.09);
+      border: 1px solid rgba(232, 185, 76, 0.44);
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
     }
-
-    .rule { height: 1px; background: var(--line); border: 0; margin: 48px 0; }
+    .tldr p { color: var(--ink); }
 
     footer {
-      margin-top: 48px;
-      padding: 26px 0 60px;
+      position: relative;
+      z-index: 2;
+      margin-top: 24px;
+      padding: 30px 0 64px;
       border-top: 1px solid var(--line);
       font-size: 13px;
-      color: var(--muted);
+      color: var(--ink-faint);
       display: flex;
       flex-wrap: wrap;
-      gap: 8px 18px;
+      gap: 10px 20px;
       align-items: center;
       justify-content: space-between;
+    }
+    footer a { text-decoration: none; }
+
+    /* ----- Reveals ----- */
+    .rise {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 720ms ease-out, transform 880ms var(--ease);
+    }
+    .rise.is-in { opacity: 1; transform: none; }
+    .rise[data-d="1"] { transition-delay: 90ms; }
+    .rise[data-d="2"] { transition-delay: 180ms; }
+    .rise[data-d="3"] { transition-delay: 270ms; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .rise { opacity: 1 !important; transform: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="gem" viewBox="0 0 64 64">
+        <polygon points="32,2 60,17 60,47 32,62 4,47 4,17" fill="#8E1129"/>
+        <polygon points="18,12 46,12 46,38 18,38" fill="#D6294A"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="atmos" aria-hidden="true"></div>
+  <canvas id="shardCanvas" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
   <div class="topbar">
     <div class="topbar-inner">
       <a class="back" href="/">
-        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-          <path d="M9 2L4 7l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <svg class="gm" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
         Rubi Ventures
       </a>
       <nav class="topnav" aria-label="The Cube">
@@ -209,53 +507,120 @@
   </div>
 
   <div class="wrap">
-    <!-- ===== Hero / About ===== -->
+    <!-- ============================== Hero ============================== -->
     <section id="about" class="hero">
-      <div class="logo">
-        <span class="logo-tile">
-          <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'; this.parentNode.querySelector('.mark').style.display='grid';">
-          <span class="mark" style="display:none;"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-        </span>
-        THE CUBE
-      </div>
-      <h1>The Cube</h1>
-      <p class="tagline">Want a fun game to play with your friends? Give this one a roll.</p>
-      <p class="lede" style="margin-top: 16px;">
-        The dead-simple drinking game my friends actually play. Add your players, pass the
-        phone, and let the cube decide. No accounts, no internet, no nonsense.
-      </p>
-    </section>
-
-    <!-- ===== Showcase ===== -->
-    <section class="showcase">
-      <ul class="points">
-        <li>Set up a game in seconds — just add player names.</li>
-        <li>Works entirely offline. Nothing ever leaves your phone.</li>
-        <li>No sign-up, no accounts, no tracking, no ads.</li>
-        <li>Rated 18+. Built for adults of legal drinking age.</li>
-      </ul>
-      <div class="device" role="img" aria-label="The Cube app screenshot">
-        <div class="device-inner">
-          <div class="device-fallback" aria-hidden="true">
-            <span class="mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="fb-name">The Cube</span>
-            <span class="fb-sub">In development</span>
+      <div class="hero-grid">
+        <div>
+          <div class="lockup rise">
+            <span class="logo-tile">
+              <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
+            </span>
+            <span class="logo-word">The&nbsp;Cube</span>
           </div>
-          <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async" onerror="this.style.display='none'">
+          <p class="eyebrow rise">A Rubi Ventures app &nbsp;·&nbsp; In development</p>
+          <h1 class="rise" data-d="1" style="margin-top:18px;">The Cube</h1>
+          <p class="tagline rise" data-d="1">
+            Want a fun game to play with your friends? Give this one a roll.
+          </p>
+          <p class="lede rise" data-d="2">
+            The dead-simple drinking game my friends actually play. Add your
+            players, pass the phone, and let the cube decide. No accounts, no
+            internet, no nonsense.
+          </p>
+          <div class="hero-cta rise" data-d="3">
+            <button type="button" class="btn solid" id="rollBtn">Roll the cube</button>
+            <a href="#privacy" class="btn">Privacy</a>
+          </div>
+        </div>
+
+        <div class="table rise" data-d="2">
+          <div class="scene" id="scene" role="button" tabindex="0"
+               aria-label="Roll the cube. Drag to spin it, or press Enter to roll.">
+            <div class="tilt">
+            <div class="die" id="die">
+              <!-- 1 -->
+              <div class="face" data-face="front"><span class="pip p22"></span></div>
+              <!-- 6 -->
+              <div class="face" data-face="back">
+                <span class="pip p11"></span><span class="pip p13"></span>
+                <span class="pip p21"></span><span class="pip p23"></span>
+                <span class="pip p31"></span><span class="pip p33"></span>
+              </div>
+              <!-- 2 -->
+              <div class="face" data-face="right">
+                <span class="pip p11"></span><span class="pip p33"></span>
+              </div>
+              <!-- 5 -->
+              <div class="face" data-face="left">
+                <span class="pip p11"></span><span class="pip p13"></span>
+                <span class="pip p22"></span>
+                <span class="pip p31"></span><span class="pip p33"></span>
+              </div>
+              <!-- 3 -->
+              <div class="face" data-face="top">
+                <span class="pip p11"></span><span class="pip p22"></span><span class="pip p33"></span>
+              </div>
+              <!-- 4 -->
+              <div class="face" data-face="bottom">
+                <span class="pip p11"></span><span class="pip p13"></span>
+                <span class="pip p31"></span><span class="pip p33"></span>
+              </div>
+            </div>
+            </div>
+            <span class="shadow" aria-hidden="true"></span>
+          </div>
+
+          <div class="readout" aria-live="polite">
+            <div class="readout-num" id="readNum">1</div>
+            <div class="readout-say" id="readSay">The cube decides</div>
+          </div>
+          <p class="die-hint">Drag to spin &nbsp;·&nbsp; flick to roll</p>
         </div>
       </div>
     </section>
 
-    <hr class="rule" />
+    <hr class="rule">
 
-    <!-- ===== Privacy ===== -->
+    <!-- ============================ Showcase ============================ -->
+    <section class="showcase">
+      <div>
+        <p class="eyebrow rise">How it plays</p>
+        <h3 class="rise" data-d="1" style="margin:18px 0 24px;">Nothing to set up. Nothing to sign in to.</h3>
+        <ul class="points rise" data-d="2">
+          <li>Set up a game in seconds — just add player names.</li>
+          <li>Works entirely offline. Nothing ever leaves your phone.</li>
+          <li>No sign-up, no accounts, no tracking, no ads.</li>
+          <li>Rated 18+. Built for adults of legal drinking age.</li>
+        </ul>
+      </div>
+      <div class="rise" data-d="2">
+        <div class="device" role="img" aria-label="The Cube app on a phone">
+          <div class="device-inner">
+            <div class="device-fallback" aria-hidden="true">
+              <span class="logo-tile" style="width:44px;height:44px;border-radius:12px;">
+                <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
+              </span>
+              <span class="nm">The Cube</span>
+              <span class="st">In development</span>
+            </div>
+            <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
+                 onerror="this.style.display='none'">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- ============================= Privacy ============================ -->
     <section id="privacy" class="body">
-      <h1 style="font-size: clamp(28px, 5vw, 40px);">Privacy Policy</h1>
-      <p class="date">Effective date: July 20, 2026</p>
+      <p class="eyebrow rise">Legal</p>
+      <h1 class="rise" data-d="1" style="font-size:clamp(34px,5.6vw,58px); margin-top:18px;">Privacy Policy</h1>
+      <p class="date rise" data-d="1">Effective date: July 20, 2026</p>
 
-      <div class="tldr">
-        <strong>The short version:</strong> The Cube collects nothing. No accounts, no
-        tracking, no ads, no internet connection. Everything happens on your device.
+      <div class="tldr rise" data-d="2">
+        <p><strong>The short version:</strong> The Cube collects nothing. No accounts, no
+        tracking, no ads, no internet connection. Everything happens on your device.</p>
       </div>
 
       <h2>Information we collect</h2>
@@ -287,9 +652,291 @@
     </section>
 
     <footer>
-      <span>The Cube · Please drink responsibly.</span>
-      <span>Rubi Ventures, LLC · © 2026</span>
+      <span>The Cube &nbsp;·&nbsp; Please drink responsibly.</span>
+      <span><a href="/">Rubi Ventures, LLC</a> &nbsp;·&nbsp; © 2026</span>
     </footer>
   </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+
+    /* ===================================================================
+       1. Lay the die out in 3D.
+
+       CSS space is x right, y down, z toward the viewer. Each face starts
+       facing +z, so pushing it out with translateZ after its own rotation
+       lands it on the right side of the cube — the standard recipe.
+       =================================================================== */
+    var scene = document.getElementById('scene');
+    var die   = document.getElementById('die');
+    var readNum = document.getElementById('readNum');
+    var readSay = document.getElementById('readSay');
+
+    var FACES = [
+      { key: 'front',  pips: 1, rot: '',                 n: [ 0,  0,  1] },
+      { key: 'back',   pips: 6, rot: 'rotateY(180deg) ', n: [ 0,  0, -1] },
+      { key: 'right',  pips: 2, rot: 'rotateY(90deg) ',  n: [ 1,  0,  0] },
+      { key: 'left',   pips: 5, rot: 'rotateY(-90deg) ', n: [-1,  0,  0] },
+      { key: 'top',    pips: 3, rot: 'rotateX(90deg) ',  n: [ 0, -1,  0] },
+      { key: 'bottom', pips: 4, rot: 'rotateX(-90deg) ', n: [ 0,  1,  0] }
+    ];
+
+    function layout() {
+      var half = scene.getBoundingClientRect().width / 2;
+      FACES.forEach(function (f) {
+        var el = die.querySelector('[data-face="' + f.key + '"]');
+        if (el) el.style.transform = f.rot + 'translateZ(' + half.toFixed(2) + 'px)';
+      });
+    }
+
+    /* ---- Which face is pointing at the camera? ----
+       The live transform is rotateX(rx) rotateY(ry), i.e. R = Rx · Ry, so
+       apply Ry first and pick whichever normal ends up with the largest z. */
+    function facing(rx, ry) {
+      var ax = rx * Math.PI / 180, ay = ry * Math.PI / 180;
+      var cx = Math.cos(ax), sx = Math.sin(ax);
+      var cy = Math.cos(ay), sy = Math.sin(ay);
+      var best = FACES[0], bestZ = -Infinity;
+      for (var i = 0; i < FACES.length; i++) {
+        var n = FACES[i].n;
+        // Ry: x' = cy*x + sy*z ; z' = -sy*x + cy*z
+        var x1 = cy * n[0] + sy * n[2];
+        var y1 = n[1];
+        var z1 = -sy * n[0] + cy * n[2];
+        // Rx: y'' = cx*y - sx*z ; z'' = sx*y + cx*z
+        var z2 = sx * y1 + cx * z1;
+        if (z2 > bestZ) { bestZ = z2; best = FACES[i]; }
+      }
+      return best;
+    }
+
+    var SAYINGS = [
+      'Pass it left', 'Pick a category', 'Everyone points', 'Rhyme or drink water',
+      'Trade seats', 'Never have I ever', 'Two truths', 'Cube says so'
+    ];
+
+    /* ===================================================================
+       2. Physics: angular velocity with damping, then a snap to the nearest
+          quarter turn so the die always settles square to the camera.
+       =================================================================== */
+    var rx = -22, ry = 34;            // current euler angles, degrees
+    var vx = 0,   vy = 0;             // deg/frame-ish
+    var snapping = false, settled = true;
+    var dragging = false, lastX = 0, lastY = 0, moved = 0, lastMoveT = 0;
+
+    function apply() {
+      die.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+    }
+
+    function announce() {
+      var f = facing(rx, ry);
+      readNum.textContent = String(f.pips);
+      readSay.textContent = SAYINGS[Math.floor(Math.random() * SAYINGS.length)];
+    }
+
+    function land() {
+      settled = true;
+      snapping = false;
+      announce();
+      var r = scene.getBoundingClientRect();
+      Shards.burst(r.left + r.width / 2, r.top + r.height / 2, 18);
+    }
+
+    // A flick or a button press: spin hard, then let damping bring it down.
+    function roll(power) {
+      settled = false;
+      snapping = false;
+      var sign = Math.random() < 0.5 ? -1 : 1;
+      vy = sign * (10 + Math.random() * 10) * power;
+      vx = (Math.random() < 0.5 ? -1 : 1) * (7 + Math.random() * 9) * power;
+      if (REDUCED) {
+        // No tumbling — jump straight to a random resting face.
+        rx = (Math.random() * 4 | 0) * 90;
+        ry = (Math.random() * 4 | 0) * 90;
+        vx = vy = 0;
+        apply();
+        land();
+      }
+    }
+
+    document.getElementById('rollBtn').addEventListener('click', function () { roll(1); });
+    scene.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); roll(1); }
+    });
+
+    scene.addEventListener('pointerdown', function (e) {
+      dragging = true; moved = 0;
+      lastX = e.clientX; lastY = e.clientY;
+      lastMoveT = e.timeStamp;
+      vx = vy = 0;
+      snapping = false; settled = false;
+      scene.classList.add('grabbing');
+      try { scene.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+
+    scene.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      var dt = Math.max(1, e.timeStamp - lastMoveT);
+      lastMoveT = e.timeStamp;
+      ry += dx * 0.55;
+      rx -= dy * 0.55;
+      // Track the throw so releasing mid-gesture keeps the momentum.
+      vy = (dx * 0.55) * (16 / dt);
+      vx = (-dy * 0.55) * (16 / dt);
+      apply();
+    });
+
+    function release() {
+      if (!dragging) return;
+      dragging = false;
+      scene.classList.remove('grabbing');
+      if (moved < 5) { roll(1); return; }        // a tap is a roll
+      vx = clamp(vx, -34, 34);
+      vy = clamp(vy, -34, 34);
+      if (Math.abs(vx) + Math.abs(vy) < 1.2) { vx = vy = 0; }
+    }
+    scene.addEventListener('pointerup', release);
+    scene.addEventListener('pointercancel', release);
+
+    /* ---- Main loop ---- */
+    var lastT = 0;
+    function frame(now) {
+      requestAnimationFrame(frame);
+      var dt = lastT ? Math.min(now - lastT, 50) : 16;
+      lastT = now;
+      var step = dt / 16.667;
+
+      if (dragging) return;
+
+      var speed = Math.abs(vx) + Math.abs(vy);
+      if (speed > 0.05) {
+        rx += vx * step;
+        ry += vy * step;
+        var damp = Math.pow(0.955, step);
+        vx *= damp; vy *= damp;
+        apply();
+        if (Math.abs(vx) + Math.abs(vy) < 0.6) { vx = vy = 0; snapping = true; }
+      } else if (snapping || (!settled && !REDUCED)) {
+        // Ease onto the nearest quarter turn on both axes.
+        var tx = Math.round(rx / 90) * 90;
+        var ty = Math.round(ry / 90) * 90;
+        var k = 1 - Math.pow(0.001, dt / 1000);
+        rx += (tx - rx) * k;
+        ry += (ty - ry) * k;
+        apply();
+        if (Math.abs(tx - rx) < 0.35 && Math.abs(ty - ry) < 0.35) {
+          rx = tx; ry = ty;
+          apply();
+          land();
+        }
+      }
+      Shards.tick(dt);
+    }
+
+    /* ===================================================================
+       3. A little gold confetti when it lands.
+       =================================================================== */
+    var Shards = (function () {
+      var canvas = document.getElementById('shardCanvas');
+      var ctx = canvas.getContext('2d');
+      var list = [], W = 0, H = 0, dpr = 1;
+      var on = !REDUCED;
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = window.innerWidth; H = window.innerHeight;
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function burst(x, y, n) {
+        if (!on) return;
+        for (var i = 0; i < n; i++) {
+          var a = Math.random() * 6.283;
+          var v = 1.6 + Math.random() * 4.4;
+          list.push({
+            x: x, y: y,
+            vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.4,
+            s: 1.6 + Math.random() * 3.2,
+            rot: Math.random() * 6.283,
+            vr: (Math.random() - 0.5) * 0.32,
+            life: 1,
+            dec: 0.010 + Math.random() * 0.014
+          });
+        }
+      }
+
+      function tick(dt) {
+        if (!on) return;
+        ctx.clearRect(0, 0, W, H);
+        if (!list.length) return;
+        var step = dt / 16.667;
+        ctx.globalCompositeOperation = 'lighter';
+        for (var i = list.length - 1; i >= 0; i--) {
+          var s = list[i];
+          s.vy += 0.07 * step;
+          s.vx *= 0.99; s.vy *= 0.99;
+          s.x += s.vx * step; s.y += s.vy * step;
+          s.rot += s.vr * step;
+          s.life -= s.dec * step;
+          if (s.life <= 0 || s.y > H + 60) { list.splice(i, 1); continue; }
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.rot);
+          ctx.fillStyle = 'rgba(232, 185, 76, ' + (s.life * 0.9).toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.moveTo(0, -s.s);
+          ctx.lineTo(s.s * 0.7, 0);
+          ctx.lineTo(0, s.s);
+          ctx.lineTo(-s.s * 0.7, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+      return { burst: burst, tick: tick, resize: resize };
+    })();
+
+    layout();
+    apply();
+    announce();
+    window.addEventListener('resize', layout);
+    requestAnimationFrame(frame);
+
+    // An opening roll, so the page arrives in motion.
+    if (!REDUCED) window.setTimeout(function () { roll(0.85); }, 620);
+
+    /* ===================================================================
+       4. Reveals
+       =================================================================== */
+    var els = [].slice.call(document.querySelectorAll('.rise'));
+    if ('IntersectionObserver' in window && !REDUCED) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add('is-in');
+          io.unobserve(en.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+      els.forEach(function (el) { io.observe(el); });
+    } else {
+      els.forEach(function (el) { el.classList.add('is-in'); });
+    }
+  })();
+  </script>
 </body>
 </html>

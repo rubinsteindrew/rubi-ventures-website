@@ -3,335 +3,860 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rubi Ventures — Apps worth opening</title>
-  <meta name="description" content="Rubi Ventures, LLC builds thoughtful consumer apps. Today we build apps. Tomorrow, whatever earns the same care.">
-  <meta name="theme-color" content="#FAF7F0">
+  <title>Rubi Ventures — We build apps worth opening</title>
+  <meta name="description" content="Rubi Ventures, LLC builds thoughtful consumer apps, cut one at a time. Every app is a facet of the same stone.">
+  <meta name="theme-color" content="#08060A">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <meta property="og:title" content="Rubi Ventures">
-  <meta property="og:description" content="We build apps worth opening.">
+  <meta property="og:description" content="We build apps worth opening. Every app is a facet of the same stone.">
   <meta property="og:type" content="website">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
 
   <style>
     /* =====================================================================
        Rubi Ventures, LLC — single-file marketing site.
+       Concept: "inside the stone." The page is the interior of a ruby;
+       every app we build is a facet of it.
 
-       Deployment notes
-       ----------------
-       • Local preview:  `npm run dev`  (uses npx serve)
-                         or open this file directly in a browser.
-       • Squarespace:    paste this whole file's contents into a single
-                         Code Block, or split <style>/<script> into Code
-                         Injection (header/footer) and the <body> markup
-                         into a Code Block. Either path is supported.
-       • Replace the inline SVG logo with your actual logo file by swapping
-         <use href="#gem"/> usages for <img src="assets/logo-mark.svg">.
+       The centrepiece is a real gem — a convex polyhedron cut to round-
+       brilliant proportions, ray-traced in a fragment shader with
+       refraction, total internal reflection, Beer-Lambert absorption and
+       chromatic dispersion. It is one persistent full-viewport WebGL
+       canvas; the gem's on-screen position is a shader uniform, animated
+       toward whichever "anchor" element is currently in view. That's why
+       it can fly from the hero into the collection diagram without ever
+       being re-created.
 
-       Forms wire-up
-       -------------
-       This file ships with two forms (launch updates + contact). Both
-       post to placeholders. To wire them up, scroll to the <script>
-       block and set SUBSCRIBE_ENDPOINT and CONTACT_ENDPOINT — see the
-       comments there for Formspree / Resend / ConvertKit options.
+       Deployment
+       ----------
+       • Local preview:  `npm run dev`   (npx serve on :3000)
+       • Squarespace:    this file is deliberately self-contained (no build
+                         step, no JS dependencies) so it can be pasted into
+                         a single Code Block, or split <style>/<script> into
+                         Code Injection and the <body> into a Code Block.
+       • Forms:          CONTACT_ENDPOINT / SUBSCRIBE_ENDPOINT near the
+                         bottom of the <script>.
+
+       Graceful degradation
+       --------------------
+       • No WebGL   → a static faceted SVG gem stands in (see #gemFallback).
+       • No JS      → all content is in the markup; the collection panels
+                      are plain <section>s revealed by :target-less CSS.
+       • prefers-reduced-motion → gem holds still, dust is off, no reveals.
        ===================================================================== */
 
-    /* ----- Design tokens ----- */
+    /* ---------------------------------------------------------------------
+       Tokens
+       ------------------------------------------------------------------ */
     :root {
-      --cream:        #FAF7F0;  /* background */
-      --charcoal:     #2A2622;  /* primary text */
-      --muted:        #6B6359;  /* light secondary text (small UI only) */
-      --muted-body:   #5A534A;  /* AAA-compliant secondary body text */
-      --ruby:         #B01E37;  /* accent — links, CTAs, gem */
-      --ruby-dark:    #931a2e;  /* button hover */
-      --hairline:     rgba(42, 38, 34, 0.12);
+      --void:      #08060A;   /* deepest ground */
+      --stone:     #0E0A11;   /* raised surfaces */
+      --stone-2:   #15101B;   /* raised surfaces, hover */
+      --ruby:      #E11D3C;
+      --ruby-lit:  #FF6478;
+      --ruby-deep: #5E0818;
+      --ash:       #F0EAE7;   /* primary text */
+      --ash-dim:   rgba(240, 234, 231, 0.64);
+      --ash-faint: rgba(240, 234, 231, 0.40);
+      --edge:      rgba(240, 234, 231, 0.10);
+      --edge-lit:  rgba(240, 234, 231, 0.22);
+
+      /* per-product light */
+      --clubhouse: #43AC71;
+      --cube:      #E8B94C;
+      --uncut:     #C9BFC4;
+
+      /* the accent currently in play — JS retunes this per facet */
+      --app:       var(--ruby);
+
+      --display: 'Bodoni Moda', 'Didot', 'Times New Roman', Georgia, serif;
+      --ui:      'Inter Tight', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+      --ease:    cubic-bezier(.16, 1, .3, 1);
+      --gut:     24px;
     }
+    @media (min-width: 768px) { :root { --gut: 40px; } }
 
     *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
     body {
       margin: 0;
-      background: var(--cream);
-      color: var(--charcoal);
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--void);
+      color: var(--ash);
+      font-family: var(--ui);
       font-size: 17px;
-      line-height: 1.7;
+      line-height: 1.65;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
     }
     @media (max-width: 640px) { body { font-size: 16px; } }
-    img, svg { display: block; max-width: 100%; }
+    img, svg, canvas { display: block; max-width: 100%; }
     a { color: inherit; }
-
-    ::selection { background: rgba(176, 30, 55, 0.2); color: var(--charcoal); }
+    ::selection { background: rgba(225, 29, 60, 0.36); color: #fff; }
     :focus { outline: none; }
-    :focus-visible { outline: 2px solid var(--ruby); outline-offset: 3px; border-radius: 2px; }
-
-    /* ----- Layout ----- */
-    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-    @media (min-width: 768px) { .container { padding: 0 40px; } }
-
-    section { padding: 96px 0; }
-    @media (min-width: 768px) { section { padding: 128px 0; } }
-    .divided { border-top: 1px solid var(--hairline); }
-
-    .grid { display: grid; gap: 40px; grid-template-columns: 1fr; }
-    @media (min-width: 900px) { .grid-12 { grid-template-columns: repeat(12, 1fr); gap: 56px; } }
-    .col-4, .col-5, .col-7, .col-8 { grid-column: 1 / -1; }
-    @media (min-width: 900px) {
-      .col-4 { grid-column: span 4; }
-      .col-5 { grid-column: span 5; }
-      .col-7 { grid-column: span 7; }
-      .col-8 { grid-column: span 8; }
+    :focus-visible {
+      outline: 1px solid var(--ruby-lit);
+      outline-offset: 4px;
+      border-radius: 2px;
     }
 
-    /* ----- Typography ----- */
+    /* ---------------------------------------------------------------------
+       Atmosphere — light pooling out of the dark, plus film grain.
+       Both are decorative and sit behind everything.
+       ------------------------------------------------------------------ */
+    .atmos {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(70% 50% at 50% -10%, rgba(225, 29, 60, 0.16), transparent 70%),
+        radial-gradient(45% 40% at 100% 30%, rgba(94, 8, 24, 0.30), transparent 72%),
+        radial-gradient(60% 45% at 0% 82%, rgba(225, 29, 60, 0.09), transparent 70%);
+    }
+    .grain {
+      position: fixed;
+      inset: -50%;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    /* Cursor as a light source. Position is set from JS. */
+    .torch {
+      position: fixed;
+      z-index: 1;
+      width: 40vmax;
+      height: 40vmax;
+      left: 0; top: 0;
+      margin: -20vmax 0 0 -20vmax;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(closest-side, rgba(225, 29, 60, 0.13), transparent 100%);
+      transition: opacity 700ms ease;
+      will-change: transform;
+    }
+    body.has-pointer .torch { opacity: 1; }
+
+    /* The gem, and the dust around it. */
+    #gemCanvas, #dustCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    #dustCanvas { z-index: 4; }
+    body.gem-grab { cursor: grabbing; }
+    body.gem-over { cursor: grab; }
+
+    #gemFallback {
+      position: fixed;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      filter: drop-shadow(0 0 60px rgba(225, 29, 60, 0.45));
+      transition: opacity 600ms ease;
+    }
+    #gemFallback.on { opacity: 1; }
+
+    /* ---------------------------------------------------------------------
+       Layout
+       ------------------------------------------------------------------ */
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--gut);
+    }
+    main { position: relative; z-index: 2; }
+    section { position: relative; padding: 120px 0; }
+    @media (min-width: 768px) { section { padding: 160px 0; } }
+
+    /* A hairline that reads as a cut edge rather than a border. */
+    .cut-top::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--edge) 12%, var(--edge-lit) 50%, var(--edge) 88%, transparent);
+    }
+
+    /* ---------------------------------------------------------------------
+       Type
+       ------------------------------------------------------------------ */
     h1, h2, h3 {
       margin: 0;
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-weight: 500;
-      color: var(--charcoal);
-      letter-spacing: -0.005em;
-      line-height: 1.08;
-    }
-    h1 {
-      font-size: clamp(46px, 7.4vw, 92px);
+      font-family: var(--display);
+      font-weight: 400;
+      font-variation-settings: 'opsz' 96;
       line-height: 1.02;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.015em;
     }
-    h2 { font-size: clamp(34px, 4.6vw, 60px); }
-    h3 { font-size: clamp(24px, 2.4vw, 30px); }
-    p  { margin: 0; }
+    h1 { font-size: clamp(52px, 8.4vw, 116px); }
+    h2 { font-size: clamp(38px, 5.4vw, 76px); }
+    h3 { font-size: clamp(25px, 2.6vw, 34px); font-variation-settings: 'opsz' 40; }
+    p { margin: 0; }
 
     .eyebrow {
-      display: inline-block;
-      font-family: 'Inter', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--ui);
       font-size: 11px;
       font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--muted-body);
+      letter-spacing: 0.22em;
+      color: var(--ash-faint);
     }
+    .eyebrow::before {
+      content: "";
+      width: 5px; height: 5px;
+      flex: none;
+      background: var(--app);
+      transform: rotate(45deg);
+      box-shadow: 0 0 10px var(--app);
+      transition: background 600ms ease, box-shadow 600ms ease;
+    }
+    .eyebrow.bare::before { display: none; }
+
     .lede {
-      font-size: clamp(18px, 1.55vw, 21px);
+      font-size: clamp(18px, 1.5vw, 21px);
       line-height: 1.55;
-      color: var(--muted-body);
-      max-width: 560px;
+      color: var(--ash-dim);
+      max-width: 46ch;
+    }
+    .fig {
+      font-family: var(--display);
+      font-style: italic;
+      font-variation-settings: 'opsz' 40;
+      font-size: clamp(21px, 2.1vw, 28px);
+      line-height: 1.3;
+      color: var(--ash);
     }
     .accent { color: var(--ruby); }
-    .serif  { font-family: 'Cormorant Garamond', Georgia, serif; }
 
-    /* ----- Buttons ----- */
+    /* ---------------------------------------------------------------------
+       Buttons & links
+       ------------------------------------------------------------------ */
     .btn {
+      position: relative;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      background: var(--ruby);
-      color: var(--cream);
-      padding: 14px 28px;
-      border: 0;
-      border-radius: 6px;
-      font: 500 14px/1 'Inter', sans-serif;
-      letter-spacing: 0.02em;
+      gap: 10px;
+      padding: 15px 28px;
+      border: 1px solid var(--app);
+      background: transparent;
+      color: var(--ash);
+      font: 500 13px/1 var(--ui);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
       cursor: pointer;
-      text-decoration: none;
-      transition: background 200ms ease;
+      overflow: hidden;
+      clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+      transition: color 240ms ease, border-color 400ms ease;
     }
-    .btn:hover, .btn:focus-visible { background: var(--ruby-dark); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    /* ----- Animated underline link ----- */
-    .link {
-      color: var(--ruby);
-      text-decoration: none;
-      position: relative;
-      display: inline-block;
-      padding-bottom: 2px;
-      font-weight: 500;
-    }
-    .link::after {
+    .btn::before {
       content: "";
       position: absolute;
-      left: 0;
-      bottom: 0;
-      height: 1px;
-      width: 100%;
-      background: currentColor;
-      transform: scaleX(0);
-      transform-origin: left center;
-      transition: transform 280ms ease-out;
+      inset: 0;
+      z-index: -1;
+      background: var(--app);
+      transform: translateY(101%);
+      transition: transform 420ms var(--ease);
     }
-    .link:hover::after, .link:focus-visible::after { transform: scaleX(1); }
+    .btn:hover, .btn:focus-visible { color: #fff; }
+    .btn:hover::before, .btn:focus-visible::before { transform: none; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.solid { background: var(--app); color: #fff; border-color: transparent; }
+    .btn.solid::before { background: #fff; }
+    .btn.solid:hover, .btn.solid:focus-visible { color: var(--void); }
 
-    /* ----- Nav ----- */
+    .link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ash);
+      text-decoration: none;
+      font-size: 15px;
+      padding-bottom: 3px;
+      background-image: linear-gradient(var(--app), var(--app));
+      background-size: 0% 1px;
+      background-position: 0 100%;
+      background-repeat: no-repeat;
+      transition: background-size 420ms var(--ease), color 240ms ease;
+    }
+    .link:hover, .link:focus-visible { background-size: 100% 1px; }
+    .link .arw { transition: transform 420ms var(--ease); }
+    .link:hover .arw { transform: translateX(5px); }
+
+    /* ---------------------------------------------------------------------
+       Nav
+       ------------------------------------------------------------------ */
+    .scrollbar {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 60;
+      height: 2px;
+      width: 100%;
+      transform: scaleX(0);
+      transform-origin: 0 50%;
+      background: linear-gradient(90deg, var(--ruby-deep), var(--ruby), var(--ruby-lit));
+      will-change: transform;
+    }
     .nav {
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 50;
-      background: var(--cream);
-      border-bottom: 1px solid var(--hairline);
+      transition: background 400ms ease, border-color 400ms ease, backdrop-filter 400ms ease;
+      border-bottom: 1px solid transparent;
+    }
+    .nav.stuck {
+      background: rgba(8, 6, 10, 0.72);
+      border-bottom-color: var(--edge);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
     }
     .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--gut);
+      height: 68px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 64px;
+      gap: 20px;
     }
-    .nav-brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+    .nav-brand { display: inline-flex; align-items: center; text-decoration: none; }
+    .nav ul { display: flex; align-items: center; gap: 30px; list-style: none; margin: 0; padding: 0; }
+    .nav ul a, .dropdown-toggle {
+      font-size: 14px;
+      color: var(--ash-dim);
       text-decoration: none;
-      color: var(--charcoal);
+      transition: color 240ms ease;
     }
-    .nav-brand .wordmark { font-size: 22px; }
-    .nav ul {
-      display: flex;
-      gap: 32px;
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .nav ul a:hover, .nav ul a:focus-visible { color: var(--ash); }
+    @media (max-width: 560px) {
+      .nav ul { gap: 18px; }
+      .nav ul a, .dropdown-toggle { font-size: 13px; }
+      .nav-inner { height: 60px; }
     }
-    .nav ul a {
-      font-size: 15px;
-      text-decoration: none;
-      color: var(--charcoal);
-      transition: color 200ms ease;
-    }
-    .nav ul a:hover, .nav ul a:focus-visible { color: var(--ruby); }
-    @media (max-width: 480px) {
-      .nav ul { gap: 20px; }
-      .nav ul a { font-size: 14px; }
+    /* Four links plus the wordmark stops fitting somewhere around 360px, and
+       the row is nowrap, so Contact would just get clipped. Drop Studio
+       instead — it's one scroll away. */
+    @media (max-width: 430px) {
+      .nav ul { gap: 14px; }
+      .nav-studio { display: none; }
     }
 
-    /* ----- Wordmark ----- */
+    /* Wordmark: the gem dots the i, sized off the em box so it scales. */
     .wordmark {
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-weight: 500;
-      letter-spacing: -0.01em;
+      font-family: var(--display);
+      font-weight: 400;
+      font-variation-settings: 'opsz' 40;
+      font-size: 25px;
       line-height: 1;
+      letter-spacing: 0.01em;
+      color: var(--ash);
       display: inline-flex;
       align-items: baseline;
       white-space: nowrap;
     }
-    .wordmark .i {
-      position: relative;
-      display: inline-block;
-    }
-    /* The gem dots the i — sized and positioned relative to the i's em-box
-       so it scales with the wordmark font-size. */
+    .wordmark .i { position: relative; display: inline-block; }
     .wordmark .gem-dot {
       position: absolute;
       left: 50%;
-      top: -0.02em;
-      width: 0.42em;
-      height: 0.46em;
+      top: -0.10em;
+      width: 0.44em;
+      height: 0.48em;
       transform: translateX(-50%);
       pointer-events: none;
+      filter: drop-shadow(0 0 6px rgba(225, 29, 60, 0.85));
     }
+    @keyframes dotPulse {
+      0%, 100% { filter: drop-shadow(0 0 5px rgba(225, 29, 60, 0.7)); }
+      50%      { filter: drop-shadow(0 0 12px rgba(255, 100, 120, 1)); }
+    }
+    .nav-brand:hover .gem-dot { animation: dotPulse 1.4s ease-in-out infinite; }
 
-    /* ----- Hero ----- */
-    .hero { padding-top: 144px; padding-bottom: 80px; }
-    @media (min-width: 768px) { .hero { padding-top: 176px; padding-bottom: 112px; } }
-    .hero h1 { margin-top: 24px; max-width: 14ch; }
-    .hero .lede { margin-top: 28px; }
-    .hero-cta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 28px;
+    /* Apps dropdown */
+    .has-dropdown { position: relative; display: flex; align-items: center; }
+    .dropdown-toggle {
+      display: inline-flex;
       align-items: center;
-      margin-top: 48px;
+      gap: 7px;
+      background: none;
+      border: 0;
+      margin: 0; padding: 0;
+      font-family: var(--ui);
+      cursor: pointer;
     }
-
-    /* ----- Bullets ----- */
-    .bullets {
-      list-style: none;
-      padding: 0;
-      margin: 24px 0 0;
-      max-width: 560px;
-    }
-    .bullets li {
-      padding-left: 22px;
-      position: relative;
-      color: var(--charcoal);
-    }
-    .bullets li + li { margin-top: 10px; }
-    .bullets li::before {
-      content: "·";
-      color: var(--ruby);
+    .dropdown-toggle:hover, .dropdown-toggle[aria-expanded="true"] { color: var(--ash); }
+    .dropdown-caret { width: 9px; height: 9px; transition: transform 300ms var(--ease); }
+    .dropdown-toggle[aria-expanded="true"] .dropdown-caret { transform: rotate(180deg); }
+    .dropdown-menu {
       position: absolute;
-      left: 6px;
-      top: -0.1em;
-      font-size: 1.4em;
-      line-height: 1;
-      font-weight: 700;
+      top: calc(100% + 18px);
+      right: 0;
+      min-width: 264px;
+      list-style: none;
+      margin: 0;
+      padding: 8px;
+      background: rgba(14, 10, 17, 0.94);
+      border: 1px solid var(--edge);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity 220ms ease, transform 300ms var(--ease), visibility 220ms;
     }
+    .nav .dropdown-menu { display: block; }
+    .has-dropdown[data-open="true"] .dropdown-menu { opacity: 1; visibility: visible; transform: none; }
+    .nav .dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 11px 12px;
+      color: var(--ash);
+      transition: background 200ms ease;
+    }
+    .nav .dropdown-menu a:hover, .nav .dropdown-menu a:focus-visible { background: rgba(240, 234, 231, 0.06); }
+    .di-name { font-size: 15px; line-height: 1.25; }
+    .di-desc { font-size: 12px; line-height: 1.3; color: var(--ash-faint); }
+    .di-ext { font-size: 11px; opacity: 0.55; }
 
-    /* ----- Forms ----- */
-    .field { display: block; }
-    .field + .field { margin-top: 22px; }
-    .field label { display: block; margin-bottom: 10px; }
-    .field input,
-    .field textarea,
-    .inline-form input {
-      width: 100%;
-      background: transparent;
-      color: var(--charcoal);
-      border: 1px solid var(--hairline);
-      border-radius: 6px;
-      padding: 13px 16px;
-      font: 16px/1.5 'Inter', sans-serif;
-      transition: border-color 200ms ease;
+    /* Product logo tiles */
+    .tile {
+      flex: none;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: #17121C;
+      border: 1px solid var(--edge);
     }
-    .field input::placeholder,
-    .field textarea::placeholder,
-    .inline-form input::placeholder { color: rgba(107, 99, 89, 0.7); }
-    .field input:focus,
-    .field textarea:focus,
-    .inline-form input:focus {
-      border-color: var(--ruby);
-      outline: none;
-    }
-    .field textarea { resize: vertical; min-height: 140px; }
+    .tile img { width: 100%; height: 100%; object-fit: cover; }
+    .tile.lg { width: 58px; height: 58px; border-radius: 14px; }
 
-    .inline-form {
+    /* ---------------------------------------------------------------------
+       Hero
+       ------------------------------------------------------------------ */
+    .hero {
+      min-height: 100svh;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      max-width: 480px;
+      justify-content: center;
+      padding-top: 120px;
+      padding-bottom: 88px;
     }
-    @media (min-width: 540px) { .inline-form { flex-direction: row; align-items: stretch; } }
-    .inline-form input { flex: 1; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+    @media (min-width: 900px) {
+      .hero-grid { grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr); gap: 32px; }
+    }
+    .hero h1 { margin-top: 26px; max-width: 11ch; }
+    .hero .lede { margin-top: 30px; }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 18px 26px; align-items: center; margin-top: 44px; }
 
-    .form-status {
-      font-size: 14px;
-      margin-top: 12px;
-      color: var(--muted-body);
-      line-height: 1.5;
+    /* Invisible box the gem is asked to fill. */
+    .gem-slot { position: relative; width: 100%; aspect-ratio: 1 / 1; }
+    .hero-slot { max-height: 68svh; }
+    @media (max-width: 899px) {
+      /* On narrow screens the stone sits behind the copy instead of beside it. */
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-slot {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: min(104vw, 560px);
+        transform: translate(-50%, -50%);
+        z-index: -1;
+        pointer-events: none;
+      }
+      .hero-copy { position: relative; }
+      /* The headline lands right on the stone's brightest facet here, so pool
+         some darkness under the text rather than trusting the contrast. */
+      .hero-copy::before {
+        content: "";
+        position: absolute;
+        left: -10%; right: -10%; top: -8%; bottom: -10%;
+        z-index: -1;
+        pointer-events: none;
+        background: radial-gradient(70% 60% at 40% 46%,
+          rgba(8, 6, 10, 0.88), rgba(8, 6, 10, 0.58) 56%, transparent 78%);
+      }
     }
-    .form-status[data-state="error"] { color: var(--ruby); }
 
-    /* ----- Device frame ----- */
-    .device {
-      width: 100%;
-      max-width: 252px;
-      margin: 0 auto;
-      aspect-ratio: 9 / 19;
-      border: 1px solid var(--hairline);
-      border-radius: 36px;
-      padding: 8px;
+    .hero-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 64px;
+      color: var(--ash-faint);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
     }
-    .device-inner {
-      width: 100%;
-      height: 100%;
-      border: 1px solid var(--hairline);
-      border-radius: 28px;
+    .drag-hint { display: inline-flex; align-items: center; gap: 10px; }
+    .drag-hint svg { width: 15px; height: 15px; }
+    @keyframes nudge {
+      0%, 100% { transform: translateX(-3px); }
+      50%      { transform: translateX(3px); }
+    }
+    .drag-hint svg { animation: nudge 2.4s ease-in-out infinite; }
+    @media (max-width: 640px) { .drag-hint { display: none; } }
+    .scroll-cue { display: inline-flex; align-items: center; gap: 12px; }
+    .scroll-cue i {
+      display: block;
+      width: 1px; height: 42px;
+      background: linear-gradient(var(--edge-lit), transparent);
       position: relative;
       overflow: hidden;
-      background: var(--cream);
+    }
+    .scroll-cue i::after {
+      content: "";
+      position: absolute;
+      left: 0; top: 0;
+      width: 1px; height: 12px;
+      background: var(--ruby-lit);
+      animation: drip 2.2s ease-in-out infinite;
+    }
+    @keyframes drip {
+      0%   { transform: translateY(-14px); opacity: 0; }
+      35%  { opacity: 1; }
+      100% { transform: translateY(42px); opacity: 0; }
+    }
+
+    /* ---------------------------------------------------------------------
+       The Collection — the gem is the portfolio.
+       ------------------------------------------------------------------ */
+    .coll-head { max-width: 46ch; }
+    .coll-head h2 { margin-top: 24px; }
+    .coll-head .lede { margin-top: 24px; }
+
+    .stage {
+      position: relative;
+      margin-top: 56px;
+      display: grid;
+      place-items: center;
+    }
+    .stage-slot { width: min(62vh, 560px); max-width: 100%; }
+
+    /* On a wide screen the diagram pins to the middle of the screen while
+       you scroll past it, so the stone holds still and all three callouts
+       are on screen together.
+
+       The pin length has to come from PADDING on the sticky element's
+       parent, not margin on the stage: a bottom margin would collapse
+       straight out through .container (no bottom padding or border to stop
+       it), leaving the containing block too short to pin against. */
+    @media (min-width: 900px) {
+      #collection { padding-bottom: 48px; }
+      #collection > .container { padding-bottom: 42vh; padding-bottom: 42svh; }
+      .stage {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        height: 100svh;
+        margin-top: 40px;
+      }
+      .stage-slot { width: min(52vh, 480px); width: min(52svh, 480px); }
+    }
+
+    /* Jeweller's-diagram callouts arranged around the stone. */
+    .facet {
+      position: absolute;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: none;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      color: inherit;
+      font-family: var(--ui);
+      text-align: left;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Each callout carries its own product colour, so its leader line and
+       diamond read correctly whatever the stone happens to be lit as. This
+       also makes the three of them a legend at a glance. */
+    .facet[data-app="clubhouse"] { --app: var(--clubhouse); }
+    .facet[data-app="cube"]      { --app: var(--cube); }
+    .facet[data-app="next"]      { --app: var(--uncut); }
+
+    /* Leader line. The end nearest the stone carries the colour and the
+       diamond; the line grows outward from the label toward the stone. */
+    .facet-line {
+      flex: none;
+      height: 1px;
+      width: var(--len, 84px);
+      background: linear-gradient(90deg, var(--app), var(--edge));
+      position: relative;
+      transform: scaleX(0.34);
+      transform-origin: 100% 50%;
+      transition: transform 620ms var(--ease), opacity 400ms ease;
+      opacity: 0.5;
+    }
+    .facet-line::after {
+      content: "";
+      position: absolute;
+      left: -3px; top: -2.5px;
+      width: 6px; height: 6px;
+      background: var(--app);
+      transform: rotate(45deg) scale(0.7);
+      box-shadow: 0 0 12px var(--app);
+      transition: transform 500ms var(--ease);
+    }
+    .facet-body { padding: 0 0 0 16px; }
+    .facet-num {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      color: var(--ash-faint);
+      transition: color 300ms ease;
+    }
+    .facet-name {
+      display: block;
+      font-family: var(--display);
+      font-variation-settings: 'opsz' 40;
+      font-size: clamp(23px, 2.5vw, 33px);
+      line-height: 1.1;
+      margin-top: 4px;
+      transition: color 300ms ease;
+    }
+    .facet-note {
+      display: block;
+      font-size: 13px;
+      color: var(--ash-faint);
+      margin-top: 5px;
+      transition: color 300ms ease;
+    }
+    .facet-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 10px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--app);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 380ms ease, transform 420ms var(--ease);
+    }
+    .facet:hover .facet-line,
+    .facet:focus-visible .facet-line,
+    .facet.lit .facet-line { transform: none; opacity: 1; }
+    .facet:hover .facet-line::after,
+    .facet:focus-visible .facet-line::after,
+    .facet.lit .facet-line::after { transform: rotate(45deg) scale(1.15); }
+    .facet:hover .facet-note,
+    .facet:focus-visible .facet-note,
+    .facet.lit .facet-note { color: var(--ash-dim); }
+    .facet:hover .facet-open,
+    .facet:focus-visible .facet-open,
+    .facet.lit .facet-open { opacity: 1; transform: none; }
+
+    /* Callouts on the left of the stone mirror the whole lockup. */
+    .facet.left { flex-direction: row-reverse; }
+    .facet.left .facet-line {
+      transform-origin: 0 50%;
+      background: linear-gradient(90deg, var(--edge), var(--app));
+    }
+    .facet.left .facet-line::after { left: auto; right: -3px; }
+    .facet.left .facet-body { padding: 0 16px 0 0; text-align: right; }
+    .facet.left .facet-open { flex-direction: row-reverse; }
+
+    /* Desktop placement, in stage coordinates. The section heading occupies
+       the top-left, so the callouts run down the right, left, right —
+       keeping 01/02/03 in reading order without colliding with it. */
+    @media (min-width: 900px) {
+      .facet[data-app="clubhouse"] { right: 0;  top: 29%; --len: 78px; }
+      .facet[data-app="cube"]      { left: 0;   top: 54%; --len: 78px; }
+      .facet[data-app="next"]      { right: 2%; top: 78%; --len: 62px; }
+    }
+    /* Below that the diagram becomes a list under the stone. */
+    @media (max-width: 899px) {
+      .stage { display: block; min-height: 0; margin-top: 48px; }
+      .stage-slot { width: min(78vw, 420px); margin: 0 auto; }
+      .facet-rail { margin-top: 40px; display: grid; gap: 2px; }
+      .facet {
+        position: static;
+        width: 100%;
+        padding: 20px 4px;
+        border-top: 1px solid var(--edge);
+      }
+      .facet:last-of-type { border-bottom: 1px solid var(--edge); }
+      /* In list form every row reads left-to-right: line, then label. */
+      .facet, .facet.left { flex-direction: row; }
+      .facet.left .facet-body { padding: 0 0 0 16px; text-align: left; }
+      .facet.left .facet-open { flex-direction: row; }
+      .facet-line, .facet.left .facet-line {
+        width: 30px;
+        transform-origin: 0 50%;
+        background: linear-gradient(90deg, var(--edge), var(--app));
+      }
+      .facet-line::after, .facet.left .facet-line::after { left: auto; right: -3px; }
+      .facet-open { opacity: 1; transform: none; }
+    }
+
+    /* --- Facet detail panel: frosted glass over a glowing stone --- */
+    .panel-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: rgba(8, 6, 10, 0.55);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 340ms ease, visibility 340ms;
+    }
+    body.panel-open .panel-scrim { opacity: 1; visibility: visible; }
+
+    .panel-host {
+      position: fixed;
+      z-index: 56;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: max(20px, 4vh) var(--gut);
+      pointer-events: none;
+    }
+    .panel {
+      position: relative;
+      width: min(980px, 100%);
+      max-height: min(88svh, 820px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: clamp(26px, 4vw, 52px);
+      background:
+        linear-gradient(180deg, rgba(240, 234, 231, 0.055), rgba(240, 234, 231, 0.012)),
+        rgba(11, 8, 14, 0.80);
+      border: 1px solid var(--edge-lit);
+      backdrop-filter: blur(26px) saturate(150%);
+      -webkit-backdrop-filter: blur(26px) saturate(150%);
+      box-shadow:
+        0 40px 120px rgba(0, 0, 0, 0.72),
+        inset 0 1px 0 rgba(240, 234, 231, 0.10);
+      /* Chamfer the top-left and bottom-right, leaving the top-right square
+         so the close button has a corner to sit in. */
+      clip-path: polygon(26px 0, 100% 0, 100% calc(100% - 26px), calc(100% - 26px) 100%, 0 100%, 0 26px);
+      display: none;
+      opacity: 0;
+      transform: translateY(22px) scale(0.985);
+      transition: opacity 380ms ease, transform 560ms var(--ease);
+    }
+    .panel.mounted { display: block; pointer-events: auto; }
+    .panel.shown { opacity: 1; transform: none; }
+    /* A single glint sweeping across when the panel opens. */
+    .panel.shown::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, 0.10) 48%, transparent 62%);
+      transform: translateX(-100%);
+      animation: glint 1100ms var(--ease) 120ms both;
+    }
+    @keyframes glint { to { transform: translateX(100%); } }
+
+    .panel-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      z-index: 3;
+      width: 40px; height: 40px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 1px solid var(--edge);
+      color: var(--ash-dim);
+      cursor: pointer;
+      transition: color 200ms ease, border-color 200ms ease, transform 300ms var(--ease);
+    }
+    .panel-close:hover { color: var(--ash); border-color: var(--app); transform: rotate(90deg); }
+
+    .panel-grid { display: grid; gap: 34px; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .panel-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); gap: 46px; } }
+    .panel-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .panel-head h3 { font-variation-settings: 'opsz' 96; font-size: clamp(32px, 4vw, 50px); }
+    .panel .fig { margin-top: 18px; }
+    .panel .lede { margin-top: 18px; max-width: 52ch; }
+    .panel-cta { display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; margin-top: 34px; }
+
+    .cuts { list-style: none; padding: 0; margin: 26px 0 0; }
+    .cuts li {
+      position: relative;
+      padding-left: 24px;
+      color: var(--ash-dim);
+      font-size: 15.5px;
+      line-height: 1.55;
+    }
+    .cuts li + li { margin-top: 12px; }
+    .cuts li::before {
+      content: "";
+      position: absolute;
+      left: 2px; top: 0.62em;
+      width: 6px; height: 6px;
+      background: var(--app);
+      transform: rotate(45deg);
+      box-shadow: 0 0 9px var(--app);
+    }
+
+    /* Device frame */
+    .device {
+      width: 100%;
+      max-width: 238px;
+      margin: 0 auto;
+      aspect-ratio: 9 / 19;
+      padding: 7px;
+      border: 1px solid var(--edge-lit);
+      border-radius: 34px;
+      background: linear-gradient(160deg, rgba(240, 234, 231, 0.09), rgba(240, 234, 231, 0.02));
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 60px -20px var(--app);
+    }
+    .device-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      border-radius: 27px;
+      background: #0B080E;
+    }
+    .device-screen {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    /* Masks the iOS status bar baked into the Your Clubhouse capture,
+       blending into that app's green header. */
+    .device-statusfill {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 7%;
+      z-index: 2;
+      background: #375B42;
     }
     .device-fallback {
       position: absolute;
@@ -340,90 +865,141 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      gap: 12px;
       text-align: center;
+      padding: 22px;
     }
-    .device-screen {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
-      display: block;
-    }
-    /* Covers the iOS status bar (time/battery/wifi) baked into the
-       Your Clubhouse screenshot, blending into the app's green header. */
-    .device-statusfill {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 7%;
-      background: #375B42;
-      z-index: 2;
-    }
-    .device-notch {
-      position: absolute;
-      top: 14px;
-      left: 50%;
-      width: 56px;
-      height: 4px;
-      transform: translateX(-50%);
-      background: rgba(42, 38, 34, 0.15);
-      border-radius: 999px;
-    }
-    .device-fallback .serif { font-size: 22px; margin-top: 14px; }
-    .device-fallback .eyebrow { margin-top: 14px; }
+    .device-fallback .nm { font-family: var(--display); font-size: 21px; }
+    .device-fallback .st { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--app); }
 
-    /* ----- Footer ----- */
+    /* ---------------------------------------------------------------------
+       Studio — with a gemstone certificate for the boilerplate.
+       ------------------------------------------------------------------ */
+    .studio-grid { display: grid; gap: 48px; grid-template-columns: 1fr; align-items: start; }
+    @media (min-width: 960px) { .studio-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 72px; } }
+    .studio-copy h2 { margin-top: 24px; max-width: 16ch; }
+    .studio-copy p { margin-top: 28px; max-width: 56ch; color: var(--ash-dim); }
+    .studio-copy p strong { color: var(--ash); font-weight: 500; }
+
+    .cert {
+      padding: 30px;
+      border: 1px solid var(--edge);
+      background: linear-gradient(180deg, rgba(240, 234, 231, 0.04), transparent);
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+    }
+    .cert-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--edge);
+    }
+    .cert-top svg { width: 20px; height: 20px; flex: none; }
+    .cert-top span { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ash-faint); }
+    .cert dl { margin: 0; display: grid; gap: 0; }
+    .cert dt {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ruby-lit);
+      padding-top: 20px;
+    }
+    .cert dd { margin: 6px 0 0; font-size: 16px; color: var(--ash); }
+    .cert dd + dt { border-top: 1px solid rgba(240, 234, 231, 0.055); margin-top: 20px; }
+
+    /* ---------------------------------------------------------------------
+       Forms
+       ------------------------------------------------------------------ */
+    .contact-grid { display: grid; gap: 48px; grid-template-columns: 1fr; }
+    @media (min-width: 900px) { .contact-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 72px; } }
+    .contact-copy h2 { margin-top: 24px; max-width: 13ch; }
+    .contact-copy p { margin-top: 26px; max-width: 34ch; color: var(--ash-dim); }
+
+    .field { display: block; }
+    .field + .field { margin-top: 22px; }
+    .field label {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ash-faint);
+    }
+    .field input, .field textarea, .inline-form input {
+      width: 100%;
+      background: rgba(240, 234, 231, 0.035);
+      color: var(--ash);
+      border: 1px solid var(--edge);
+      border-radius: 0;
+      padding: 14px 16px;
+      font: 16px/1.5 var(--ui);
+      transition: border-color 260ms ease, box-shadow 260ms ease, background 260ms ease;
+    }
+    .field input::placeholder, .field textarea::placeholder, .inline-form input::placeholder { color: var(--ash-faint); }
+    .field input:focus, .field textarea:focus, .inline-form input:focus {
+      outline: none;
+      border-color: var(--app);
+      background: rgba(240, 234, 231, 0.06);
+      box-shadow: 0 0 0 1px var(--app), 0 0 26px -6px var(--app);
+    }
+    .field textarea { resize: vertical; min-height: 148px; }
+    .inline-form { display: flex; flex-direction: column; gap: 12px; max-width: 470px; margin-top: 24px; }
+    @media (min-width: 560px) { .inline-form { flex-direction: row; align-items: stretch; } }
+    .inline-form input { flex: 1; }
+    .inline-form .btn { white-space: nowrap; }
+    .form-status { font-size: 14px; margin-top: 14px; color: var(--ash-dim); line-height: 1.5; }
+    .form-status[data-state="error"] { color: var(--ruby-lit); }
+    .form-status[data-state="ok"] { color: var(--clubhouse); }
+    .form-note { margin-top: 14px; font-size: 12.5px; color: var(--ash-faint); }
+
+    /* ---------------------------------------------------------------------
+       Footer
+       ------------------------------------------------------------------ */
     footer {
-      border-top: 1px solid var(--hairline);
-      padding: 40px 0;
+      position: relative;
+      z-index: 2;
+      padding: 44px 0 56px;
     }
     .footer-row {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
+      flex-wrap: wrap;
+      gap: 14px 26px;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+      color: var(--ash-faint);
     }
-    .footer-meta {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--muted-body);
-      font-size: 13px;
-    }
-    .socials {
-      display: flex;
-      gap: 22px;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .socials a {
-      color: var(--muted-body);
-      display: inline-flex;
-      transition: color 200ms ease;
-    }
-    .socials a:hover, .socials a:focus-visible { color: var(--ruby); }
+    .footer-row a { text-decoration: none; transition: color 220ms ease; }
+    .footer-row a:hover { color: var(--ash); }
+    .footer-links { display: flex; gap: 22px; }
 
-    /* ----- Reveal on scroll ----- */
-    .reveal {
+    /* ---------------------------------------------------------------------
+       Reveal choreography
+       ------------------------------------------------------------------ */
+    .rise {
       opacity: 0;
-      transform: translateY(16px);
-      transition: opacity 600ms ease-out, transform 600ms ease-out;
-      will-change: opacity, transform;
+      transform: translateY(22px);
+      transition: opacity 760ms ease-out, transform 900ms var(--ease);
     }
-    .reveal.is-visible {
-      opacity: 1;
-      transform: none;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity: 1; transform: none; transition: none; }
-      html { scroll-behavior: auto; }
-    }
+    .rise.is-in { opacity: 1; transform: none; }
+    .rise[data-d="1"] { transition-delay: 90ms; }
+    .rise[data-d="2"] { transition-delay: 180ms; }
+    .rise[data-d="3"] { transition-delay: 270ms; }
+    .rise[data-d="4"] { transition-delay: 360ms; }
 
-    /* ----- A11y helpers ----- */
+    /* Word-by-word type reveal (see shatter() in the script). */
+    .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.08em; }
+    .w-i {
+      display: inline-block;
+      transform: translateY(112%);
+      opacity: 0;
+      transition: transform 1000ms var(--ease), opacity 700ms ease;
+    }
+    .is-in .w-i { transform: none; opacity: 1; }
+
+    /* ---------------------------------------------------------------------
+       A11y helpers
+       ------------------------------------------------------------------ */
     .sr-only {
       position: absolute;
       width: 1px; height: 1px;
@@ -436,138 +1012,52 @@
     .skip-link {
       position: absolute;
       left: -9999px;
-      top: 8px;
-      background: var(--charcoal);
-      color: var(--cream);
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 14px;
+      top: 10px;
       z-index: 100;
+      background: var(--ruby);
+      color: #fff;
+      padding: 10px 16px;
+      font-size: 14px;
     }
     .skip-link:focus { left: 16px; }
 
-    /* =====================================================================
-       Per-app theming — a light touch of each product's own palette.
-       ===================================================================== */
-    :root {
-      --clubhouse:      #2f5d43;  /* Your Clubhouse — fairway green */
-      --cube-felt:      #241736;  /* The Cube — casino felt */
-      --cube-felt2:     #2f1e46;
-      --cube-gold:      #e8b94c;
-      --cube-ink:       #f4eee2;
+    /* ---------------------------------------------------------------------
+       Reduced motion — hold everything still, keep everything legible.
+       ------------------------------------------------------------------ */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .rise, .w-i { opacity: 1 !important; transform: none !important; transition: none !important; }
+      .torch { display: none; }
+      .drag-hint svg, .scroll-cue i::after, .nav-brand:hover .gem-dot { animation: none; }
+      .panel.shown::after { animation: none; content: none; }
+      .facet-line { transform: none; opacity: 1; }
+      .facet-open { opacity: 1; transform: none; }
     }
 
-    /* ----- App logo tile ----- */
-    .app-logo {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      overflow: hidden;
-      flex: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    /* No-JS: the panels are the content, so just show them stacked. */
+    .no-js .panel-host { position: static; display: block; padding: 0; pointer-events: auto; }
+    .no-js .panel {
+      display: block; opacity: 1; transform: none;
+      max-height: none; width: 100%; margin-top: 28px;
     }
-    .app-logo img { width: 100%; height: 100%; object-fit: cover; }
-    .app-logo--clubhouse { background: var(--clubhouse); }
-    .app-logo--cube      { background: var(--cube-felt2); }
-    .app-head {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-    }
-
-    /* ----- Nav dropdown (Apps) ----- */
-    .has-dropdown { position: relative; display: flex; align-items: center; }
-    .dropdown-toggle {
-      background: none;
-      border: 0;
-      margin: 0;
-      padding: 0;
-      font: inherit;
-      font-size: 15px;
-      color: var(--charcoal);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 200ms ease;
-    }
-    .dropdown-toggle:hover,
-    .dropdown-toggle:focus-visible,
-    .dropdown-toggle[aria-expanded="true"] { color: var(--ruby); }
-    .dropdown-caret { width: 9px; height: 9px; transition: transform 220ms ease; }
-    .dropdown-toggle[aria-expanded="true"] .dropdown-caret { transform: rotate(180deg); }
-    .dropdown-menu {
-      position: absolute;
-      top: calc(100% + 16px);
-      right: 0;
-      min-width: 248px;
-      background: var(--cream);
-      border: 1px solid var(--hairline);
-      border-radius: 14px;
-      box-shadow: 0 16px 40px rgba(42, 38, 34, 0.14);
-      padding: 8px;
-      list-style: none;
-      margin: 0;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-6px);
-      transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
-    }
-    .has-dropdown[data-open="true"] .dropdown-menu {
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-    }
-    /* Override the global `.nav ul { display:flex }` for the nested menu. */
-    .nav .dropdown-menu { display: block; }
-    .dropdown-menu li + li { margin-top: 2px; }
-    .nav .dropdown-menu a { display: flex; }
-    .dropdown-menu a {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      text-decoration: none;
-      color: var(--charcoal);
-      transition: background 160ms ease;
-    }
-    .dropdown-menu a:hover,
-    .dropdown-menu a:focus-visible { background: rgba(42, 38, 34, 0.055); }
-    .di-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      flex: none;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .di-logo img { width: 100%; height: 100%; object-fit: cover; }
-    .di-logo--clubhouse { background: var(--clubhouse); }
-    .di-logo--cube      { background: var(--cube-felt2); }
-    .di-name { font-size: 15px; line-height: 1.25; color: var(--charcoal); }
-    .di-desc { font-size: 12px; line-height: 1.3; color: var(--muted-body); }
-    .di-name .di-ext { font-size: 11px; opacity: 0.6; }
+    .no-js .panel-close, .no-js .panel-scrim, .no-js .facet-open { display: none; }
+    .no-js .stage { min-height: 0; }
   </style>
 </head>
-<body>
+<body class="no-js">
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- Shared SVG defs: hexagonal ruby gem (the brand mark). -->
+  <!-- Brand mark. Reused at every size via <use href="#gem">. -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
+      <linearGradient id="gemTable" x1="0" y1="0" x2="0.4" y2="1">
+        <stop offset="0" stop-color="#FF7A8C"/>
+        <stop offset="1" stop-color="#C41836"/>
+      </linearGradient>
       <symbol id="gem" viewBox="0 0 64 64">
-        <!-- Pointy-top hexagon body, darker ruby -->
-        <polygon points="32,2 60,17 60,47 32,62 4,47 4,17" fill="#9a1a33"/>
-        <!-- Bright "table" facet — the lighter pink highlight -->
-        <polygon points="18,12 46,12 46,38 18,38" fill="#d23a58"/>
-        <!-- Crisp facet edges -->
-        <g fill="none" stroke="#4f0e1f" stroke-width="1.2" stroke-linejoin="miter">
+        <polygon points="32,2 60,17 60,47 32,62 4,47 4,17" fill="#8E1129"/>
+        <polygon points="18,12 46,12 46,38 18,38" fill="url(#gemTable)"/>
+        <g fill="none" stroke="#3D0715" stroke-width="1.2" stroke-linejoin="miter">
           <polygon points="32,2 60,17 60,47 32,62 4,47 4,17"/>
           <line x1="32" y1="2"  x2="32" y2="62"/>
           <line x1="4"  y1="17" x2="60" y2="47"/>
@@ -577,17 +1067,36 @@
     </defs>
   </svg>
 
-  <!-- Reusable wordmark macro: <span class="wordmark">Rub<span class="i">i<svg ...></span></span> -->
+  <!-- Decorative layers -->
+  <div class="atmos" aria-hidden="true"></div>
+  <div class="torch" id="torch" aria-hidden="true"></div>
+  <canvas id="gemCanvas" aria-hidden="true"></canvas>
+  <canvas id="dustCanvas" aria-hidden="true"></canvas>
+  <!-- Stand-in for the ray-traced stone when WebGL is unavailable. -->
+  <svg id="gemFallback" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+    <g transform="translate(100 100)">
+      <polygon points="0,-62 44,-44 62,0 44,44 0,62 -44,44 -62,0 -44,-44" fill="#7A0F24"/>
+      <polygon points="0,-34 24,-24 34,0 24,24 0,34 -24,24 -34,0 -24,-24" fill="#D6294A"/>
+      <polygon points="0,-18 13,-13 18,0 13,13 0,18 -13,13 -18,0 -13,-13" fill="#FF7285"/>
+      <g fill="none" stroke="#2E0410" stroke-width="1.1" opacity="0.85">
+        <polygon points="0,-62 44,-44 62,0 44,44 0,62 -44,44 -62,0 -44,-44"/>
+        <polygon points="0,-34 24,-24 34,0 24,24 0,34 -24,24 -34,0 -24,-24"/>
+        <path d="M0,-62 0,-34M44,-44 24,-24M62,0 34,0M44,44 24,24M0,62 0,34M-44,44 -24,24M-62,0 -34,0M-44,-44 -24,-24"/>
+      </g>
+    </g>
+  </svg>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scrollbar" id="scrollbar" aria-hidden="true"></div>
 
-  <header class="nav" role="banner">
-    <div class="container nav-inner">
+  <header class="nav" id="nav" role="banner">
+    <div class="nav-inner">
       <a href="#top" class="nav-brand" aria-label="Rubi Ventures, home">
-        <span class="wordmark" aria-hidden="true">Rub<span class="i">i<svg class="gem-dot" aria-hidden="true" focusable="false"><use href="#gem"/></svg></span></span>
+        <span class="wordmark" aria-hidden="true">Rub<span class="i">i<svg class="gem-dot" focusable="false"><use href="#gem"/></svg></span></span>
         <span class="sr-only">Rubi Ventures</span>
       </a>
       <nav aria-label="Primary">
         <ul>
-          <li><a href="#about">About</a></li>
+          <li><a href="#collection">Collection</a></li>
           <li class="has-dropdown" id="appsDropdown">
             <button type="button" class="dropdown-toggle" id="appsToggle"
                     aria-expanded="false" aria-controls="appsMenu" aria-haspopup="true">
@@ -599,9 +1108,7 @@
             <ul class="dropdown-menu" id="appsMenu" role="menu" aria-labelledby="appsToggle">
               <li role="none">
                 <a href="https://yourclubhouse.net" target="_blank" rel="noopener" role="menuitem">
-                  <span class="di-logo di-logo--clubhouse">
-                    <img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'">
-                  </span>
+                  <span class="tile"><img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'"></span>
                   <span>
                     <span class="di-name">Your Clubhouse <span class="di-ext">↗</span></span><br>
                     <span class="di-desc">Golf, made social</span>
@@ -610,9 +1117,7 @@
               </li>
               <li role="none">
                 <a href="/cube" role="menuitem">
-                  <span class="di-logo di-logo--cube">
-                    <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
-                  </span>
+                  <span class="tile"><img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'"></span>
                   <span>
                     <span class="di-name">The Cube</span><br>
                     <span class="di-desc">The drinking game</span>
@@ -621,6 +1126,7 @@
               </li>
             </ul>
           </li>
+          <li class="nav-studio"><a href="#studio">Studio</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
       </nav>
@@ -628,162 +1134,285 @@
   </header>
 
   <main id="main">
-    <!-- ===== Hero ===== -->
+    <!-- ================================ Hero ============================ -->
     <section id="top" class="hero">
-      <div class="container">
-        <p class="eyebrow reveal">Rubi Ventures, LLC</p>
-        <h1 class="reveal">We build apps worth opening<span class="accent">.</span></h1>
-        <p class="lede reveal">
-          Thoughtful consumer apps, made one at a time.
-        </p>
-        <div class="hero-cta reveal">
-          <a href="#contact" class="btn">Get in touch</a>
-          <a href="#work" class="link">See what we're building&nbsp;→</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== About ===== -->
-    <section id="about" class="divided">
-      <div class="container grid grid-12">
-        <div class="col-4">
-          <p class="eyebrow reveal">About</p>
-        </div>
-        <div class="col-8">
-          <h2 class="reveal" style="max-width: 22ch;">A short list of apps, a careful hand.</h2>
-          <p class="reveal" style="margin-top: 32px; max-width: 62ch;">
-            Rubi Ventures builds consumer apps with the kind of restraint and detail that's hard to fake. We work on one or two things at a time, and we work on them properly.
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow rise">Rubi Ventures, LLC &nbsp;·&nbsp; Est. 2026</p>
+          <h1 data-shatter>We build apps worth opening<span class="accent">.</span></h1>
+          <p class="lede rise" data-d="2">
+            Thoughtful consumer apps, cut one at a time — then polished until
+            there's nothing left to take away.
           </p>
-          <p class="reveal" style="margin-top: 20px; max-width: 62ch; color: var(--muted-body);">
-            Today we build apps. Tomorrow, whatever earns the same care.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Featured work ===== -->
-    <section id="work" class="divided">
-      <div class="container">
-        <p class="eyebrow reveal">Now building</p>
-        <div class="grid grid-12" style="margin-top: 24px; align-items: start;">
-          <div class="col-7">
-            <div class="app-head reveal" style="margin-top: 8px;">
-              <span class="app-logo app-logo--clubhouse">
-                <img src="assets/clubhouse-logo.png" alt="Your Clubhouse logo" onerror="this.style.display='none'">
-              </span>
-              <h2>Your Clubhouse<span class="accent">.</span></h2>
-            </div>
-            <p class="serif reveal" style="margin-top: 14px; font-style: italic; font-size: clamp(20px, 2vw, 26px); line-height: 1.3;">
-              Your Course, Ranked.
-            </p>
-            <p class="lede reveal" style="margin-top: 20px; max-width: 50ch;">
-              See where your friends played, what they shot, and the courses worth chasing next.
-            </p>
-            <ul class="bullets reveal" style="margin-top: 28px;">
-              <li>Rank every course you've played, head-to-head.</li>
-              <li>Track plays, scores, and the people you played with.</li>
-              <li>Follow friends and see what's worth chasing.</li>
-              <li>Discover where to play next, wherever you land.</li>
-            </ul>
-            <div class="hero-cta reveal" style="margin-top: 32px;">
-              <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="btn">Visit yourclubhouse.net</a>
-            </div>
+          <div class="hero-cta rise" data-d="3">
+            <a href="#collection" class="btn">See the collection</a>
+            <a href="#contact" class="link">Get in touch <span class="arw" aria-hidden="true">→</span></a>
           </div>
-          <div class="col-5 reveal">
-            <div class="device" role="img" aria-label="Your Clubhouse app">
-              <div class="device-inner">
-                <div class="device-fallback" aria-hidden="true">
-                  <span class="device-notch"></span>
-                  <span class="app-logo app-logo--clubhouse" style="width:44px;height:44px;border-radius:12px;">
-                    <img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'">
-                  </span>
-                  <p class="serif">Your Clubhouse</p>
-                  <p class="eyebrow">In development</p>
+        </div>
+        <div class="gem-slot hero-slot" data-gem-anchor data-gem-fit="0.94"
+             data-gem-op="1" data-gem-op-narrow="0.68" aria-hidden="true"></div>
+      </div>
+
+      <div class="container hero-foot rise" data-d="4">
+        <span class="drag-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M9 6 5 12l4 6M15 6l4 6-4 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Drag the stone
+        </span>
+        <span class="scroll-cue">Scroll <i aria-hidden="true"></i></span>
+      </div>
+    </section>
+
+    <!-- ============================ Collection ========================== -->
+    <section id="collection" class="cut-top">
+      <div class="container">
+        <div class="coll-head">
+          <p class="eyebrow rise">The Collection</p>
+          <h2 data-shatter>Every app is a facet<span class="accent">.</span></h2>
+          <p class="lede rise" data-d="2">
+            Two cut and polished. One still rough. Turn the stone, or pick a
+            facet to look inside.
+          </p>
+        </div>
+
+        <div class="stage" id="stage">
+          <div class="gem-slot stage-slot" data-gem-anchor data-gem-fit="0.92" data-gem-op="1" aria-hidden="true"></div>
+
+          <div class="facet-rail">
+            <button type="button" class="facet" data-app="clubhouse" data-facet="0"
+                    aria-expanded="false" aria-controls="panel-clubhouse">
+              <span class="facet-line" aria-hidden="true"></span>
+              <span class="facet-body">
+                <span class="facet-num">Facet 01</span>
+                <span class="facet-name">Your Clubhouse</span>
+                <span class="facet-note">Golf, made social · In development</span>
+                <span class="facet-open">Look inside <span aria-hidden="true">→</span></span>
+              </span>
+            </button>
+
+            <button type="button" class="facet left" data-app="cube" data-facet="3"
+                    aria-expanded="false" aria-controls="panel-cube">
+              <span class="facet-line" aria-hidden="true"></span>
+              <span class="facet-body">
+                <span class="facet-num">Facet 02</span>
+                <span class="facet-name">The Cube</span>
+                <span class="facet-note">The drinking game · In development</span>
+                <span class="facet-open">Look inside <span aria-hidden="true">→</span></span>
+              </span>
+            </button>
+
+            <button type="button" class="facet" data-app="next" data-facet="6"
+                    aria-expanded="false" aria-controls="panel-next">
+              <span class="facet-line" aria-hidden="true"></span>
+              <span class="facet-body">
+                <span class="facet-num">Facet 03</span>
+                <span class="facet-name">The next cut</span>
+                <span class="facet-note">Rough stone · Unannounced</span>
+                <span class="facet-open">Get told first <span aria-hidden="true">→</span></span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panels. Real content in the markup — the overlay is progressive. -->
+      <div class="panel-scrim" id="panelScrim" aria-hidden="true"></div>
+      <div class="panel-host" id="panelHost">
+
+        <!-- ---------------------------- Your Clubhouse -------------------- -->
+        <article class="panel" id="panel-clubhouse" role="dialog" aria-modal="true"
+                 aria-labelledby="panel-clubhouse-title" style="--app: var(--clubhouse);">
+          <button type="button" class="panel-close" aria-label="Close">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M2 2l11 11M13 2L2 13" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="panel-grid">
+            <div>
+              <p class="eyebrow">Facet 01 &nbsp;·&nbsp; Now building</p>
+              <div class="panel-head" style="margin-top: 18px;">
+                <span class="tile lg"><img src="assets/clubhouse-logo.png" alt="Your Clubhouse logo" onerror="this.style.display='none'"></span>
+                <h3 id="panel-clubhouse-title">Your Clubhouse</h3>
+              </div>
+              <p class="fig">Your Course, Ranked.</p>
+              <p class="lede">
+                See where your friends played, what they shot, and the courses
+                worth chasing next.
+              </p>
+              <ul class="cuts">
+                <li>Rank every course you've played, head-to-head.</li>
+                <li>Track plays, scores, and the people you played with.</li>
+                <li>Follow friends and see what's worth chasing.</li>
+                <li>Discover where to play next, wherever you land.</li>
+              </ul>
+              <div class="panel-cta">
+                <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="btn solid">
+                  yourclubhouse.net <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </div>
+            <div>
+              <div class="device">
+                <div class="device-inner">
+                  <div class="device-fallback" aria-hidden="true">
+                    <span class="tile"><img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'"></span>
+                    <span class="nm">Your Clubhouse</span>
+                    <span class="st">In development</span>
+                  </div>
+                  <img src="assets/clubhouse-screenshot.png" alt="The Your Clubhouse app showing a ranked list of golf courses"
+                       class="device-screen" loading="lazy" decoding="async"
+                       onerror="this.onerror=null; this.src='assets/03_rank.png';">
+                  <span class="device-statusfill" aria-hidden="true"></span>
                 </div>
-                <img src="assets/clubhouse-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
-                     onerror="this.onerror=null; this.src='assets/03_rank.png';">
-                <span class="device-statusfill" aria-hidden="true"></span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </article>
 
-    <!-- ===== The Cube ===== -->
-    <section id="cube" class="divided">
-      <div class="container">
-        <div class="grid grid-12" style="align-items: start;">
-          <div class="col-7">
-            <p class="eyebrow reveal">Also building</p>
-            <div class="app-head reveal" style="margin-top: 22px;">
-              <span class="app-logo app-logo--cube">
-                <img src="assets/cube-logo.png" alt="The Cube logo" onerror="this.style.display='none'">
-              </span>
-              <h2>The Cube<span class="accent">.</span></h2>
+        <!-- ------------------------------ The Cube ----------------------- -->
+        <article class="panel" id="panel-cube" role="dialog" aria-modal="true"
+                 aria-labelledby="panel-cube-title" style="--app: var(--cube);">
+          <button type="button" class="panel-close" aria-label="Close">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M2 2l11 11M13 2L2 13" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="panel-grid">
+            <div>
+              <p class="eyebrow">Facet 02 &nbsp;·&nbsp; Also building</p>
+              <div class="panel-head" style="margin-top: 18px;">
+                <span class="tile lg"><img src="assets/cube-logo.png" alt="The Cube logo" onerror="this.style.display='none'"></span>
+                <h3 id="panel-cube-title">The Cube</h3>
+              </div>
+              <p class="fig">Want a fun game to play with your friends? Give this one a roll.</p>
+              <p class="lede">
+                The dead-simple drinking game my friends actually play. No
+                accounts, no internet, no nonsense — just you, your table, and
+                the roll of the cube.
+              </p>
+              <ul class="cuts">
+                <li>Add your players and start in seconds.</li>
+                <li>Works entirely offline — nothing ever leaves your phone.</li>
+                <li>No sign-up, no tracking, no ads.</li>
+                <li>Built for adults of legal drinking age. Please drink responsibly.</li>
+              </ul>
+              <div class="panel-cta">
+                <a href="/cube" class="btn solid">About &amp; privacy</a>
+              </div>
             </div>
-            <p class="serif reveal" style="margin-top: 14px; font-style: italic; font-size: clamp(20px, 2vw, 26px); line-height: 1.3;">
-              Want a fun game to play with your friends? Give this one a roll.
-            </p>
-            <p class="lede reveal" style="margin-top: 20px; max-width: 50ch;">
-              The dead-simple drinking game my friends actually play. No accounts, no
-              internet, no nonsense — just you, your table, and the roll of the cube.
-            </p>
-            <ul class="bullets reveal" style="margin-top: 28px;">
-              <li>Add your players and start in seconds.</li>
-              <li>Works entirely offline — nothing ever leaves your phone.</li>
-              <li>No sign-up, no tracking, no ads.</li>
-              <li>Built for adults of legal drinking age. Please drink responsibly.</li>
-            </ul>
-            <div class="hero-cta reveal" style="margin-top: 36px;">
-              <a href="/cube" class="btn">About &amp; privacy</a>
-            </div>
-          </div>
-          <div class="col-5 reveal">
-            <div class="device" role="img" aria-label="The Cube app">
-              <div class="device-inner">
-                <div class="device-fallback" aria-hidden="true">
-                  <span class="device-notch"></span>
-                  <span class="app-logo app-logo--cube" style="width:44px;height:44px;border-radius:12px;">
-                    <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
-                  </span>
-                  <p class="serif">The Cube</p>
-                  <p class="eyebrow">In development</p>
+            <div>
+              <div class="device">
+                <div class="device-inner">
+                  <div class="device-fallback" aria-hidden="true">
+                    <span class="tile"><img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'"></span>
+                    <span class="nm">The Cube</span>
+                    <span class="st">In development</span>
+                  </div>
+                  <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
+                       onerror="this.style.display='none'">
                 </div>
-                <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async" onerror="this.style.display='none'">
               </div>
             </div>
           </div>
+        </article>
+
+        <!-- ----------------------------- The next cut -------------------- -->
+        <article class="panel" id="panel-next" role="dialog" aria-modal="true"
+                 aria-labelledby="panel-next-title" style="--app: var(--uncut);">
+          <button type="button" class="panel-close" aria-label="Close">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M2 2l11 11M13 2L2 13" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div>
+            <p class="eyebrow">Facet 03 &nbsp;·&nbsp; Rough stone</p>
+            <h3 id="panel-next-title" style="margin-top: 18px;">The next cut</h3>
+            <p class="fig">Not every facet is polished yet.</p>
+            <p class="lede">
+              We work on one or two things at a time, so the third facet stays
+              rough until it's ready. Leave an email and you'll hear about it
+              the day it's cut — nothing else, ever.
+            </p>
+            <form class="inline-form" id="subscribeForm" aria-label="Launch updates" novalidate>
+              <label class="sr-only" for="sub-email">Email address</label>
+              <input id="sub-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+              <button type="submit" class="btn solid">Notify me</button>
+            </form>
+            <p class="form-status" id="subscribeStatus" role="status" aria-live="polite" hidden></p>
+            <p class="form-note">One email per launch. No newsletter, no sharing your address.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============================== Studio ============================ -->
+    <section id="studio" class="cut-top">
+      <div class="container studio-grid">
+        <div class="studio-copy">
+          <p class="eyebrow rise">The Studio</p>
+          <h2 data-shatter>Small on purpose<span class="accent">.</span></h2>
+          <p class="rise" data-d="2">
+            Rubi Ventures builds consumer apps with the kind of restraint and
+            detail that's hard to fake. We work on <strong>one or two things at
+            a time</strong>, and we work on them properly.
+          </p>
+          <p class="rise" data-d="3">
+            A rough stone becomes a gem by removing material, not adding it.
+            That's the whole method. Today we build apps — tomorrow, whatever
+            earns the same care.
+          </p>
+        </div>
+        <div class="cert rise" data-d="2">
+          <div class="cert-top">
+            <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
+            <span>Certificate of authenticity</span>
+          </div>
+          <dl>
+            <dt>Origin</dt>
+            <dd>Independent. Self-funded.</dd>
+            <dt>Cut</dt>
+            <dd>One or two apps at a time.</dd>
+            <dt>Clarity</dt>
+            <dd>No ads, no tracking, no dark patterns.</dd>
+            <dt>Hardness</dt>
+            <dd>Shipped, not announced.</dd>
+            <dt>Setting</dt>
+            <dd>Rubi Ventures, LLC &nbsp;·&nbsp; Est. 2026</dd>
+          </dl>
         </div>
       </div>
     </section>
 
-    <!-- ===== Contact ===== -->
-    <section id="contact" class="divided">
-      <div class="container grid grid-12">
-        <div class="col-5">
-          <p class="eyebrow reveal">Contact</p>
-          <h2 class="reveal" style="margin-top: 20px; max-width: 14ch;">Working on something worth building?</h2>
-          <p class="reveal" style="margin-top: 24px; max-width: 40ch; color: var(--muted-body);">
+    <!-- ============================== Contact =========================== -->
+    <section id="contact" class="cut-top">
+      <div class="container contact-grid">
+        <div class="contact-copy">
+          <p class="eyebrow rise">Contact</p>
+          <h2 data-shatter>Working on something worth building?</h2>
+          <p class="rise" data-d="2">
             We read every note. Send a short message and we'll get back to you.
           </p>
+          <div class="gem-slot" data-gem-anchor data-gem-fit="1.5" data-gem-op="0.34" aria-hidden="true"
+               style="margin-top:40px; max-width:340px;"></div>
         </div>
-        <div class="col-7">
-          <form id="contactForm" class="reveal" aria-label="Contact form" novalidate>
+        <div>
+          <form id="contactForm" class="rise" data-d="2" aria-label="Contact form" novalidate>
             <div class="field">
-              <label class="eyebrow" for="contact-name">Name</label>
+              <label for="contact-name">Name</label>
               <input id="contact-name" type="text" name="name" autocomplete="name" required>
             </div>
             <div class="field">
-              <label class="eyebrow" for="contact-email">Email</label>
+              <label for="contact-email">Email</label>
               <input id="contact-email" type="email" name="email" autocomplete="email" required>
             </div>
             <div class="field">
-              <label class="eyebrow" for="contact-message">Message</label>
-              <textarea id="contact-message" name="message" required placeholder="Tell us a bit about what you're working on."></textarea>
+              <label for="contact-message">Message</label>
+              <textarea id="contact-message" name="message" required
+                        placeholder="Tell us a bit about what you're working on."></textarea>
             </div>
-            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-top: 32px;">
-              <button type="submit" class="btn">Send message</button>
+            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap; margin-top:32px;">
+              <button type="submit" class="btn solid">Send message</button>
               <p class="form-status" id="contactStatus" role="status" aria-live="polite" hidden></p>
             </div>
           </form>
@@ -792,119 +1421,1272 @@
     </section>
   </main>
 
-  <footer role="contentinfo">
+  <footer role="contentinfo" class="cut-top">
     <div class="container footer-row">
-      <div class="footer-meta">
-        <svg width="12" height="12" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
-        <span>Rubi Ventures, LLC&nbsp;&middot;&nbsp;&copy; 2026</span>
-      </div>
+      <span style="display:inline-flex; align-items:center; gap:10px;">
+        <svg width="13" height="13" aria-hidden="true" focusable="false"><use href="#gem"/></svg>
+        Rubi Ventures, LLC &nbsp;·&nbsp; © 2026
+      </span>
+      <span class="footer-links">
+        <a href="https://yourclubhouse.net" target="_blank" rel="noopener">Your Clubhouse ↗</a>
+        <a href="/cube">The Cube</a>
+        <a href="mailto:contact@rubiventures.com">contact@rubiventures.com</a>
+      </span>
     </div>
   </footer>
 
   <script>
-    /* =====================================================================
-       Behavior — reveal-on-scroll and form submission.
-       ===================================================================== */
+  (function () {
+    'use strict';
 
-    // Subtle fade-and-rise on scroll: 600ms ease-out, 16px translateY.
-    // (Slightly longer than the 200ms spec — at 200ms the rise reads as a
-    // jitter rather than a settle. Adjust the transition above if desired.)
-    (function () {
-      var els = document.querySelectorAll('.reveal');
-      if (!('IntersectionObserver' in window)) {
-        els.forEach(function (el) { el.classList.add('is-visible'); });
-        return;
+    document.body.classList.remove('no-js');
+
+    var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+    var lerp  = function (a, b, t) { return a + (b - a) * t; };
+
+    /* ===================================================================
+       1. The stone.
+
+       Geometry: a convex polyhedron defined as the intersection of N
+       half-spaces (plane normal + distance). Ray/convex-polyhedron
+       intersection is the generalised slab method — walk every plane once,
+       keep the furthest entry and the nearest exit. It's exact, branch-
+       light, and gives perfectly crisp facet edges, which is precisely
+       what a gem needs and what an SDF would round off.
+
+       The planes are cut to real round-brilliant proportions (table 53%,
+       crown 34.5°, pavilion 40.75%/40.75°), so the silhouette and the
+       internal reflections behave like an actual stone rather than a
+       stylised diamond shape.
+       =================================================================== */
+
+    var D2R = Math.PI / 180;
+
+    function buildCut() {
+      var planes = [], glowIdx = [];
+      function push(nx, ny, nz, d) {
+        var L = Math.sqrt(nx * nx + ny * ny + nz * nz);
+        planes.push([nx / L, ny / L, nz / L, d]);
       }
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            io.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-      els.forEach(function (el) { io.observe(el); });
-    })();
 
-    // Apps dropdown: click to toggle, closes on outside-click, Escape, or
-    // selecting an item. Keyboard-accessible via the native <button>.
-    (function () {
-      var wrap   = document.getElementById('appsDropdown');
-      var toggle = document.getElementById('appsToggle');
-      if (!wrap || !toggle) return;
+      var TABLE_Y = 0.324;     // crown height, 16.2% of girdle diameter
+      var CULET_Y = 0.845;     // pavilion truncated a hair to avoid a point singularity
+      var GIRDLE_R = 0.985;    // gives the girdle ~1.2% visible thickness
+      var CROWN_A = 34.5, CROWN_B = 43.0, PAV_A = 40.75;
 
-      function open()  { wrap.setAttribute('data-open', 'true');  toggle.setAttribute('aria-expanded', 'true'); }
-      function close() { wrap.removeAttribute('data-open');        toggle.setAttribute('aria-expanded', 'false'); }
-      function isOpen() { return wrap.getAttribute('data-open') === 'true'; }
+      // --- Prefix: the reduced 26-plane cut used on low-power devices. ---
+      push(0, 1, 0, TABLE_Y);                                   // 0 : table
+      var k, phi, a;
+      for (k = 0; k < 8; k++) {                                 // 1-8 : crown mains
+        phi = k * 45 * D2R; a = CROWN_A * D2R;
+        push(Math.sin(a) * Math.cos(phi), Math.cos(a), Math.sin(a) * Math.sin(phi), Math.sin(a));
+        glowIdx.push(planes.length - 1);
+      }
+      for (k = 0; k < 8; k++) {                                 // 9-16 : girdle
+        phi = k * 45 * D2R;
+        push(Math.cos(phi), 0, Math.sin(phi), GIRDLE_R);
+      }
+      for (k = 0; k < 8; k++) {                                 // 17-24 : pavilion mains
+        phi = k * 45 * D2R; a = PAV_A * D2R;
+        push(Math.sin(a) * Math.cos(phi), -Math.cos(a), Math.sin(a) * Math.sin(phi), Math.sin(a));
+      }
+      push(0, -1, 0, CULET_Y);                                  // 25 : culet
+      var lowN = planes.length;
 
-      toggle.addEventListener('click', function (e) {
-        e.stopPropagation();
-        isOpen() ? close() : open();
-      });
-      document.addEventListener('click', function (e) {
-        if (isOpen() && !wrap.contains(e.target)) close();
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && isOpen()) { close(); toggle.focus(); }
-      });
-      wrap.addEventListener('click', function (e) {
-        if (e.target.closest('a')) close();
-      });
-    })();
+      // --- Extras: rounds the girdle and chamfers the crown to 16 points ---
+      for (k = 0; k < 8; k++) {                                 // 26-33 : girdle, off-axis
+        phi = (k * 45 + 22.5) * D2R;
+        push(Math.cos(phi), 0, Math.sin(phi), GIRDLE_R);
+      }
+      for (k = 0; k < 8; k++) {                                 // 34-41 : upper girdle halves
+        phi = (k * 45 + 22.5) * D2R; a = CROWN_B * D2R;
+        push(Math.sin(a) * Math.cos(phi), Math.cos(a), Math.sin(a) * Math.sin(phi), Math.sin(a));
+      }
 
-    function setStatus(el, message, state) {
-      el.textContent = message;
-      if (state) { el.setAttribute('data-state', state); }
-      else        { el.removeAttribute('data-state'); }
-      el.hidden = !message;
+      return { planes: planes, lowN: lowN, fullN: planes.length, crown: glowIdx };
     }
 
-    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var CUT = buildCut();
+    var NP = CUT.fullN;                       // 42
+    var PLANE_BUF = new Float32Array(NP * 4);
+    for (var i = 0; i < NP; i++) {
+      PLANE_BUF[i * 4 + 0] = CUT.planes[i][0];
+      PLANE_BUF[i * 4 + 1] = CUT.planes[i][1];
+      PLANE_BUF[i * 4 + 2] = CUT.planes[i][2];
+      PLANE_BUF[i * 4 + 3] = CUT.planes[i][3];
+    }
+    var GLOW_BUF = new Float32Array(NP);
 
-    /* -------------------------------------------------------------------
-       Contact form.
-       Recommended: Formspree to rubinsteindrew@gmail.com.
+    /* ---- Quaternion helpers (orientation, drag inertia, facet aiming) --- */
+    function qMul(a, b) {
+      return [
+        a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+        a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+        a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+        a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]
+      ];
+    }
+    function qAxis(ax, ay, az, ang) {
+      var s = Math.sin(ang / 2);
+      return [ax * s, ay * s, az * s, Math.cos(ang / 2)];
+    }
+    function qNorm(q) {
+      var L = Math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]) || 1;
+      return [q[0] / L, q[1] / L, q[2] / L, q[3] / L];
+    }
+    // Rotate a vector by q.
+    function qRot(q, v) {
+      var x = q[0], y = q[1], z = q[2], w = q[3];
+      var ix =  w * v[0] + y * v[2] - z * v[1];
+      var iy =  w * v[1] + z * v[0] - x * v[2];
+      var iz =  w * v[2] + x * v[1] - y * v[0];
+      var iw = -x * v[0] - y * v[1] - z * v[2];
+      return [
+        ix * w + iw * -x + iy * -z - iz * -y,
+        iy * w + iw * -y + iz * -x - ix * -z,
+        iz * w + iw * -z + ix * -y - iy * -x
+      ];
+    }
+    // Shortest-arc rotation taking unit vector a onto unit vector b.
+    function qFromTo(a, b) {
+      var d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+      if (d > 0.999999) return [0, 0, 0, 1];
+      if (d < -0.999999) {
+        // 180° — any perpendicular axis will do.
+        var ax = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+        var c = [a[1] * ax[2] - a[2] * ax[1], a[2] * ax[0] - a[0] * ax[2], a[0] * ax[1] - a[1] * ax[0]];
+        return qNorm([c[0], c[1], c[2], 0]);
+      }
+      var cr = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+      return qNorm([cr[0], cr[1], cr[2], 1 + d]);
+    }
+    // Scale a rotation: slerp from identity toward q by t.
+    function qScale(q, t) {
+      var w = clamp(q[3], -1, 1);
+      var ang = Math.acos(w) * 2;
+      if (ang < 1e-6) return [0, 0, 0, 1];
+      var s = Math.sin(ang / 2);
+      return qAxis(q[0] / s, q[1] / s, q[2] / s, ang * t);
+    }
+    // local -> world 3x3, column-major for WebGL.
+    function qMat3(q) {
+      var x = q[0], y = q[1], z = q[2], w = q[3];
+      var x2 = x + x, y2 = y + y, z2 = z + z;
+      var xx = x * x2, xy = x * y2, xz = x * z2;
+      var yy = y * y2, yz = y * z2, zz = z * z2;
+      var wx = w * x2, wy = w * y2, wz = w * z2;
+      return new Float32Array([
+        1 - (yy + zz), xy + wz,       xz - wy,
+        xy - wz,       1 - (xx + zz), yz + wx,
+        xz + wy,       yz - wx,       1 - (xx + yy)
+      ]);
+    }
+    function mat3T(m) {
+      return new Float32Array([m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]]);
+    }
 
-         1. Sign in at https://formspree.io and create a new form
-            pointing at rubinsteindrew@gmail.com.
-         2. Copy the form's endpoint URL.
-         3. Paste it as CONTACT_ENDPOINT below.
+    /* ------------------------------ Shaders ---------------------------- */
 
-       Alternatives that work the same way: Getform, Basin, Netlify Forms,
-       or a serverless function using Resend / Postmark / SendGrid.
-       ------------------------------------------------------------------- */
-    var CONTACT_ENDPOINT = 'https://formspree.io/f/xbdbwloa';
+    var VERT = [
+      'attribute vec2 aPos;',
+      'void main() { gl_Position = vec4(aPos, 0.0, 1.0); }'
+    ].join('\n');
+
+    function fragSource(q) {
+      return [
+        'precision highp float;',
+        '#define NP ' + NP,
+        '#define AA ' + q.aa,
+        '#define BOUNCES ' + q.bounces,
+        '#define DISP ' + q.disp,
+        '#define EDGES ' + (q.edges ? 1 : 0),
+
+        'uniform vec3  uGem;        // xy = centre in device px, z = half-width in px',
+        'uniform mat3  uRot;        // local -> world',
+        'uniform mat3  uInvRot;     // world -> local',
+        'uniform vec3  uLight;',
+        'uniform vec3  uAbsorb;',
+        'uniform vec3  uTint;',
+        'uniform float uTintAmt;',
+        'uniform vec3  uGlowColor;',
+        'uniform float uGlowAmp;',
+        'uniform float uOpacity;',
+        'uniform float uHalo;',
+        'uniform float uDisp;',
+        'uniform float uFlash;',
+        'uniform vec4  uPlanes[NP];',
+        'uniform float uGlow[NP];',
+        'uniform int   uN;',
+
+        'const float CAM_D = 3.3;',
+        'const float F0    = 0.077;   // Fresnel at normal incidence, n = 1.77',
+
+        /* Generalised slab test. Also carries the per-facet glow value out,
+           because GLSL ES 1.00 forbids indexing a uniform array with a
+           runtime value — reading uGlow[i] inside the loop is legal, a
+           later uGlow[hitIndex] would not be. */
+        'bool hit(vec3 ro, vec3 rd, out float tIn, out vec3 nIn, out float gIn,',
+        '                           out float tOut, out vec3 nOut, out float gOut) {',
+        '  tIn = -1e20; tOut = 1e20;',
+        '  nIn = vec3(0.0, 1.0, 0.0); nOut = vec3(0.0, -1.0, 0.0);',
+        '  gIn = 0.0; gOut = 0.0;',
+        '  for (int i = 0; i < NP; i++) {',
+        '    if (i >= uN) break;',
+        '    vec4 pl = uPlanes[i];',
+        '    float dn = dot(rd, pl.xyz);',
+        '    float sd = dot(ro, pl.xyz) - pl.w;',
+        '    if (abs(dn) < 1e-7) {',
+        '      if (sd > 0.0) return false;',
+        '    } else {',
+        '      float t = -sd / dn;',
+        '      if (dn < 0.0) { if (t > tIn)  { tIn  = t; nIn  = pl.xyz; gIn  = uGlow[i]; } }',
+        '      else          { if (t < tOut) { tOut = t; nOut = pl.xyz; gOut = uGlow[i]; } }',
+        '    }',
+        '  }',
+        '  return tOut > tIn && tOut > 0.0;',
+        '}',
+
+        '#if EDGES',
+        /* Distance to the second-nearest plane. On a facet the nearest plane
+           is the facet itself (distance 0), so the runner-up goes to zero
+           exactly along the facet edges — a free wireframe. */
+        'float edgeDist(vec3 p) {',
+        '  float m1 = 1e9, m2 = 1e9;',
+        '  for (int i = 0; i < NP; i++) {',
+        '    if (i >= uN) break;',
+        '    float d = abs(dot(p, uPlanes[i].xyz) - uPlanes[i].w);',
+        '    if (d < m1) { m2 = m1; m1 = d; } else if (d < m2) { m2 = d; }',
+        '  }',
+        '  return m2;',
+        '}',
+        '#endif',
+
+        /* A small procedural studio: one hard key (which is what makes a gem
+           scintillate), a ruby bounce from below, a horizon band for the
+           facets to catch, and the currently selected product's light. */
+        'vec3 env(vec3 d) {',
+        '  vec3 c = vec3(0.014, 0.010, 0.016);',
+        '  float k = max(0.0, dot(d, uLight));',
+        '  c += vec3(1.00, 0.96, 0.92) * pow(k, 420.0) * 46.0;',
+        '  c += vec3(1.00, 0.90, 0.86) * pow(k, 13.0)  * 0.80;',
+        '  c += vec3(0.95, 0.14, 0.26) * pow(max(0.0, dot(d, normalize(vec3( 0.55, -0.62,  0.55)))), 9.0) * 1.25;',
+        '  c += vec3(0.34, 0.11, 0.18) * pow(max(0.0, dot(d, normalize(vec3(-0.80,  0.16, -0.52)))), 4.0);',
+        '  c += vec3(0.20, 0.09, 0.12) * smoothstep(0.26, 0.0, abs(d.y + 0.06));',
+        '  c += uTint * uTintAmt * pow(max(0.0, dot(d, normalize(vec3(-0.42, 0.52, 0.74)))), 5.0) * 3.0;',
+        '  return c;',
+        '}',
+
+        'float fres(float ct) { return F0 + (1.0 - F0) * pow(1.0 - ct, 5.0); }',
+
+        'vec3 tonemap(vec3 x) {',
+        '  x = max(vec3(0.0), x);',
+        '  x = (x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14);',
+        '  return pow(clamp(x, 0.0, 1.0), vec3(0.4545));',
+        '}',
+
+        'void main() {',
+        '  float R = max(uGem.z, 1.0);',
+        '  vec2 rel = (gl_FragCoord.xy - uGem.xy) / R;',
+        '  float rr = length(rel);',
+
+        /* Bloom that survives outside the silhouette. Written additively,
+           so it reads as light spilling onto the page rather than a sprite. */
+        '  vec3 haloCol = mix(vec3(0.95, 0.11, 0.24), uTint, uTintAmt * 0.75);',
+        '  vec3 halo = haloCol * exp(-3.1 * max(0.0, rr - 0.55)) * uHalo * 0.24;',
+
+        '  if (rr > 1.30) {',
+        '    gl_FragColor = vec4(tonemap(halo) * uOpacity, 0.0);',
+        '    return;',
+        '  }',
+
+        '  vec3 lin = vec3(0.0);',
+        '  float cov = 0.0;',
+
+        '  for (int sy = 0; sy < AA; sy++) {',
+        '  for (int sx = 0; sx < AA; sx++) {',
+        '    vec2 jit = (vec2(float(sx), float(sy)) + 0.5) / float(AA) - 0.5;',
+        '    vec2 p = (gl_FragCoord.xy + jit - uGem.xy) / R;',
+
+        '    vec3 ro = vec3(0.0, 0.0, -CAM_D);',
+        '    vec3 rd = normalize(vec3(p * 0.345, 1.0));',
+        '    vec3 rol = uInvRot * ro;',
+        '    vec3 rdl = uInvRot * rd;',
+
+        '    float tIn, tOut, gIn, gOut; vec3 nIn, nOut;',
+        '    if (!hit(rol, rdl, tIn, nIn, gIn, tOut, nOut, gOut)) continue;',
+
+        '    cov += 1.0;',
+        '    vec3 pos = rol + rdl * max(tIn, 0.0);',
+        '    float ct = clamp(dot(-rdl, nIn), 0.0, 1.0);',
+        '    float F  = fres(ct);',
+
+        '    vec3 col = env(uRot * reflect(rdl, nIn)) * F;',
+        '    col += gIn * uGlowColor * uGlowAmp * 1.5;',
+
+        '    vec3 inner = vec3(0.0);',
+        '    for (int ch = 0; ch < DISP; ch++) {',
+        '#if DISP == 3',
+        '      float kk = float(ch) - 1.0;',
+        '      vec3 mask = vec3(float(ch == 0), float(ch == 1), float(ch == 2));',
+        '#else',
+        '      float kk = 0.0;',
+        '      vec3 mask = vec3(1.0);',
+        '#endif',
+        '      float ior = 1.762 + kk * uDisp;',
+        '      vec3 rdi = refract(rdl, nIn, 1.0 / ior);',
+        '      if (dot(rdi, rdi) < 0.25) continue;',
+        '      vec3 pi = pos;',
+        '      vec3 thr = vec3(1.0);',
+        '      vec3 acc = vec3(0.0);',
+        '      for (int b = 0; b < BOUNCES; b++) {',
+        '        float ta, tb, ga, gb; vec3 na, nb;',
+        '        vec3 org = pi + rdi * 1e-3;',
+        '        if (!hit(org, rdi, ta, na, ga, tb, nb, gb)) break;',
+        '        float seg = max(tb, 0.0);',
+        '        thr *= exp(-uAbsorb * seg);',
+        '        vec3 pe = org + rdi * seg;   // sits on the exit facet',
+        '        float ci = clamp(dot(rdi, nb), 0.0, 1.0);',
+        '        vec3 outDir = refract(rdi, -nb, ior);',
+        '        float Fo;',
+        '        if (dot(outDir, outDir) < 0.25) {',
+        '          Fo = 1.0;                      // total internal reflection',
+        '        } else {',
+        '          Fo = fres(ci);',
+        '          acc += thr * (1.0 - Fo) * env(uRot * outDir);',
+        '        }',
+        '        acc += thr * gb * uGlowColor * uGlowAmp;',
+        '        rdi = reflect(rdi, nb);',
+        '        pi = pe;',
+        '        thr *= Fo;',
+        '        if (max(thr.r, max(thr.g, thr.b)) < 0.012) break;',
+        '      }',
+        '      inner += mask * acc;',
+        '    }',
+        '    col += inner * (1.0 - F);',
+
+        '#if EDGES',
+        '    float e = 1.0 - smoothstep(0.0, 0.011, edgeDist(pos));',
+        '    col += e * (mix(vec3(1.0, 0.42, 0.52), uTint, uTintAmt * 0.8)) * (0.30 + uFlash * 3.0);',
+        '#endif',
+
+        '    lin += col;',
+        '  }}',
+
+        /* lin is already the coverage-weighted sum over samples, so dividing
+           by the sample count leaves it premultiplied by alpha — exactly the
+           form gl.blendFunc(ONE, ONE_MINUS_SRC_ALPHA) wants. */
+        '  float n = float(AA * AA);',
+        '  lin /= n;',
+        '  cov /= n;',
+        '  vec3 rgb = tonemap(lin + halo);',
+        '  gl_FragColor = vec4(rgb * uOpacity, cov * uOpacity);',
+        '}'
+      ].join('\n');
+    }
+
+    /* --------------------------- Quality tiers -------------------------- */
+    var TIERS = [
+      { name: 'low',  aa: 1, bounces: 2, disp: 1, edges: 0, planes: CUT.lowN,  dpr: 1.0 },
+      { name: 'mid',  aa: 1, bounces: 3, disp: 3, edges: 1, planes: CUT.fullN, dpr: 1.5 },
+      { name: 'high', aa: 2, bounces: 4, disp: 3, edges: 1, planes: CUT.fullN, dpr: 2.0 }
+    ];
+
+    /* ---------------------------- Product light ------------------------- */
+    // absorb = Beer-Lambert coefficient per unit path length, per channel.
+    // High in a channel means that colour is eaten, so ruby absorbs green
+    // and blue and lets red through.
+    var LOOKS = {
+      base:      { absorb: [0.30, 3.40, 2.60], tint: [1.00, 0.20, 0.32], amt: 0.55, css: 'var(--ruby)' },
+      clubhouse: { absorb: [3.60, 0.80, 3.00], tint: [0.26, 0.90, 0.48], amt: 0.80, css: 'var(--clubhouse)' },
+      cube:      { absorb: [0.45, 1.45, 4.20], tint: [1.00, 0.78, 0.30], amt: 0.80, css: 'var(--cube)' },
+      next:      { absorb: [1.70, 1.80, 1.95], tint: [0.85, 0.82, 0.86], amt: 0.55, css: 'var(--uncut)' }
+    };
+
+    /* ------------------------------ The gem ----------------------------- */
+    var Gem = (function () {
+      var canvas = document.getElementById('gemCanvas');
+      var fallback = document.getElementById('gemFallback');
+      var gl = null;
+
+      try {
+        gl = canvas.getContext('webgl', {
+          alpha: true, premultipliedAlpha: true, antialias: false,
+          depth: false, stencil: false, powerPreference: 'high-performance'
+        }) || canvas.getContext('experimental-webgl');
+      } catch (e) { gl = null; }
+
+      // Shared animation state, read by the fallback path too.
+      var state = {
+        ok: false,
+        cx: 0, cy: 0, rad: 0, op: 0,      // screen placement, css px
+        tcx: 0, tcy: 0, trad: 0, top_: 0, // targets
+        q: qNorm([0.10, 0.22, 0.03, 1]),
+        vel: [0, 0],
+        spin: 0.16,
+        light: [0.42, 0.55, -0.72],
+        lightT: [0.42, 0.55, -0.72],
+        look: LOOKS.base,
+        absorb: LOOKS.base.absorb.slice(),
+        tint: LOOKS.base.tint.slice(),
+        amt: LOOKS.base.amt,
+        glow: new Float32Array(NP),
+        glowT: new Float32Array(NP),
+        glowColor: [1, 0.25, 0.36],
+        glowColorT: [1, 0.25, 0.36],
+        halo: 1,
+        flash: 0,
+        aim: null,      // local-space normal to present to camera, or null
+        reveal: 0
+      };
+
+      if (!gl) {
+        fallback.classList.add('on');
+        return { state: state, ok: false, tick: function () {}, resize: function () {} };
+      }
+      state.ok = true;
+
+      var progs = {}, cur = null, tier = 1;
+
+      function compile(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.warn('[gem] shader:', gl.getShaderInfoLog(s));
+          gl.deleteShader(s);
+          return null;
+        }
+        return s;
+      }
+
+      function build(t) {
+        var conf = TIERS[t];
+        var vs = compile(gl.VERTEX_SHADER, VERT);
+        var fs = compile(gl.FRAGMENT_SHADER, fragSource(conf));
+        if (!vs || !fs) return null;
+        var p = gl.createProgram();
+        gl.attachShader(p, vs); gl.attachShader(p, fs);
+        gl.bindAttribLocation(p, 0, 'aPos');
+        gl.linkProgram(p);
+        gl.deleteShader(vs); gl.deleteShader(fs);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+          console.warn('[gem] link:', gl.getProgramInfoLog(p));
+          return null;
+        }
+        var names = ['uGem', 'uRot', 'uInvRot', 'uLight', 'uAbsorb', 'uTint', 'uTintAmt',
+                     'uGlowColor', 'uGlowAmp', 'uOpacity', 'uHalo', 'uDisp', 'uFlash',
+                     'uPlanes[0]', 'uGlow[0]', 'uN'];
+        var u = {};
+        names.forEach(function (n) { u[n.replace('[0]', '')] = gl.getUniformLocation(p, n); });
+        return { p: p, u: u, conf: conf };
+      }
+
+      function use(t) {
+        t = clamp(t, 0, TIERS.length - 1);
+        if (!progs[t]) progs[t] = build(t);
+        // Fall back down the tiers if a program refuses to compile at all.
+        if (!progs[t]) {
+          for (var d = t - 1; d >= 0; d--) {
+            if (!progs[d]) progs[d] = build(d);
+            if (progs[d]) { t = d; break; }
+          }
+        }
+        if (!progs[t]) { state.ok = false; fallback.classList.add('on'); return false; }
+        tier = t;
+        cur = progs[t];
+        gl.useProgram(cur.p);
+        return true;
+      }
+
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.disable(gl.DEPTH_TEST);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clearColor(0, 0, 0, 0);
+
+      // Start mid; the frame-time watchdog moves us within the first second.
+      if (!use(1)) {
+        return { state: state, ok: false, tick: function () {}, resize: function () {} };
+      }
+
+      var dpr = 1, vw = 0, vh = 0;
+      function resize() {
+        var w = window.innerWidth, h = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, cur.conf.dpr);
+        vw = w; vh = h;
+        canvas.width  = Math.max(1, Math.round(w * dpr));
+        canvas.height = Math.max(1, Math.round(h * dpr));
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+
+      function draw() {
+        var u = cur.u;
+        gl.uniform3f(u.uGem, state.cx * dpr, (vh - state.cy) * dpr, state.rad * dpr);
+        var m = qMat3(state.q);
+        gl.uniformMatrix3fv(u.uRot, false, m);
+        gl.uniformMatrix3fv(u.uInvRot, false, mat3T(m));
+        gl.uniform3fv(u.uLight, state.light);
+        gl.uniform3fv(u.uAbsorb, state.absorb);
+        gl.uniform3fv(u.uTint, state.tint);
+        gl.uniform1f(u.uTintAmt, state.amt);
+        gl.uniform3fv(u.uGlowColor, state.glowColor);
+        gl.uniform1f(u.uGlowAmp, 1.7);
+        gl.uniform1f(u.uOpacity, state.op);
+        gl.uniform1f(u.uHalo, state.halo);
+        gl.uniform1f(u.uDisp, 0.028);
+        gl.uniform1f(u.uFlash, state.flash);
+        gl.uniform4fv(u.uPlanes, PLANE_BUF);
+        gl.uniform1fv(u.uGlow, state.glow);
+        gl.uniform1i(u.uN, cur.conf.planes);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+
+      function wipe() { gl.clear(gl.COLOR_BUFFER_BIT); }
+
+      /* ---- Adaptive quality ----
+         Pick a starting tier from device signals, then only ever step DOWN.
+         Spare GPU headroom can't be measured from JS — a draw call returns
+         long before the GPU has finished — so an "upgrade if fast" rule
+         reads its own submit time as free and escalates wrongly. And a tier
+         change resizes the backbuffer, so churning mid-scroll is visible.
+         Downgrade-only, on real frame time, is both honest and stable. */
+      function initialTier() {
+        var coarse = window.matchMedia('(pointer: coarse)').matches;
+        var cores  = navigator.hardwareConcurrency || 4;
+        var mem    = navigator.deviceMemory || 4;
+        if (coarse && (cores <= 4 || mem <= 4)) return 0;
+        if (coarse || cores <= 4 || window.innerWidth < 1024) return 1;
+        return 2;
+      }
+
+      var acc = 0, frames = 0, cooldown = 0;
+      function watch(dt) {
+        cooldown -= dt;
+        acc += dt; frames++;
+        if (frames < 60) return;                 // skip the noisy first second
+        var avg = acc / frames;
+        acc = 0; frames = 0;
+        if (cooldown > 0) return;
+        if (avg > 22 && tier > 0) {              // consistently under ~45fps
+          cooldown = 3000;
+          if (use(tier - 1)) resize();
+        }
+      }
+
+      use(initialTier());
+      resize();
+      return { state: state, ok: true, resize: resize, draw: draw, wipe: wipe, watch: watch };
+    })();
+
+    /* ===================================================================
+       2. Placing the stone.
+
+       Any element with [data-gem-anchor] is a box the gem should try to
+       fill. The gem eases toward whichever anchor is closest to the middle
+       of the viewport, so it appears to fly from the hero into the
+       collection diagram and then settle behind the contact form.
+       =================================================================== */
+    var anchors = [].slice.call(document.querySelectorAll('[data-gem-anchor]'));
+    var gemFallback = document.getElementById('gemFallback');
+
+    function pickAnchor() {
+      var mid = window.innerHeight / 2;
+      var best = null, bestD = Infinity;
+      for (var i = 0; i < anchors.length; i++) {
+        var el = anchors[i];
+        if (!el.offsetParent && el.offsetWidth === 0) continue;
+        var r = el.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) continue;
+        var d = Math.abs((r.top + r.height / 2) - mid);
+        if (d < bestD) { bestD = d; best = { el: el, r: r }; }
+      }
+      return best;
+    }
+
+    function updateTargets() {
+      var a = pickAnchor();
+      var S = Gem.state;
+      if (!a) { S.top_ = 0; return null; }
+      var fit = parseFloat(a.el.getAttribute('data-gem-fit') || '1');
+      var op  = parseFloat(a.el.getAttribute('data-gem-op')  || '1');
+      // Anchors that sit behind text can ask for a dimmer stone when the
+      // layout collapses to one column.
+      var opN = a.el.getAttribute('data-gem-op-narrow');
+      if (opN !== null && window.innerWidth < 900) op = parseFloat(opN);
+      S.tcx  = a.r.left + a.r.width / 2;
+      S.tcy  = a.r.top + a.r.height / 2;
+      S.trad = Math.min(a.r.width, a.r.height) * 0.5 * fit;
+      // Fade out when the anchor is far off screen so we never pay for
+      // a gem nobody can see.
+      var vis = 1 - clamp((Math.abs(S.tcy - window.innerHeight / 2) - window.innerHeight * 0.75) / (window.innerHeight * 0.5), 0, 1);
+      S.top_ = op * vis * (0.35 + 0.65 * S.reveal);
+      return a.el;
+    }
+
+    /* ===================================================================
+       3. Ruby dust — a 2D particle field that also throws shards when a
+          facet is opened. Cheap, and it makes the stone feel like it's
+          shedding light onto the page.
+       =================================================================== */
+    var Dust = (function () {
+      var canvas = document.getElementById('dustCanvas');
+      var ctx = canvas.getContext('2d');
+      var dpr = 1, W = 0, H = 0;
+      var motes = [], shards = [];
+      var on = !REDUCED;
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = window.innerWidth; H = window.innerHeight;
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        var want = on ? clamp(Math.round(W * H / 18000), 34, 110) : 0;
+        while (motes.length > want) motes.pop();
+        while (motes.length < want) motes.push(mote(Math.random() * H));
+      }
+      function mote(y) {
+        return {
+          x: Math.random() * W,
+          y: y === undefined ? H + 20 : y,
+          z: 0.25 + Math.random() * 0.75,
+          r: 0.4 + Math.random() * 1.7,
+          ph: Math.random() * 6.283,
+          sp: 0.10 + Math.random() * 0.34,
+          hue: Math.random()
+        };
+      }
+
+      function burst(x, y, rgb, n) {
+        if (!on) return;
+        for (var i = 0; i < n; i++) {
+          var a = Math.random() * 6.283;
+          var v = 1.4 + Math.random() * 5.2;
+          shards.push({
+            x: x, y: y,
+            vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.1,
+            s: 1.4 + Math.random() * 3.4,
+            rot: Math.random() * 6.283,
+            vr: (Math.random() - 0.5) * 0.3,
+            life: 1,
+            dec: 0.008 + Math.random() * 0.014,
+            rgb: rgb
+          });
+        }
+      }
+
+      var px = -1e5, py = -1e5;
+      function pointer(x, y) { px = x; py = y; }
+
+      function tick(dt, t) {
+        if (!on) return;
+        ctx.clearRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'lighter';
+
+        var i, m;
+        for (i = 0; i < motes.length; i++) {
+          m = motes[i];
+          m.y -= m.sp * m.z * dt * 0.06;
+          var sway = Math.sin(t * 0.0006 + m.ph) * 0.30 * m.z;
+          m.x += sway;
+          // Nudge away from the cursor — reads as light pressure.
+          var dx = m.x - px, dy = m.y - py;
+          var d2 = dx * dx + dy * dy;
+          if (d2 < 20000 && d2 > 0.01) {
+            var f = (1 - d2 / 20000) * 1.5 / Math.sqrt(d2);
+            m.x += dx * f; m.y += dy * f;
+          }
+          if (m.y < -20) { motes[i] = mote(); continue; }
+          if (m.x < -30) m.x = W + 20; else if (m.x > W + 30) m.x = -20;
+
+          var alpha = 0.10 + m.z * 0.34;
+          var warm = m.hue > 0.78;
+          ctx.fillStyle = warm
+            ? 'rgba(255, 226, 214, ' + (alpha * 0.85).toFixed(3) + ')'
+            : 'rgba(' + (215 + m.hue * 40 | 0) + ', ' + (36 + m.hue * 48 | 0) + ', ' + (58 + m.hue * 34 | 0) + ', ' + alpha.toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.r * m.z, 0, 6.2832);
+          ctx.fill();
+        }
+
+        for (i = shards.length - 1; i >= 0; i--) {
+          var s = shards[i];
+          s.vy += 0.062 * dt * 0.06;
+          s.vx *= 0.988; s.vy *= 0.988;
+          s.x += s.vx * dt * 0.06;
+          s.y += s.vy * dt * 0.06;
+          s.rot += s.vr;
+          s.life -= s.dec * dt * 0.06;
+          if (s.life <= 0 || s.y > H + 60) { shards.splice(i, 1); continue; }
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.rot);
+          ctx.fillStyle = 'rgba(' + s.rgb + ', ' + (s.life * 0.85).toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.moveTo(0, -s.s);
+          ctx.lineTo(s.s * 0.72, 0);
+          ctx.lineTo(0, s.s);
+          ctx.lineTo(-s.s * 0.72, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      resize();
+      return { resize: resize, tick: tick, burst: burst, pointer: pointer, on: on };
+    })();
+
+    /* ===================================================================
+       4. Pointer — the cursor is the key light, and it can grab the stone.
+       =================================================================== */
+    var torch = document.getElementById('torch');
+    var pointerInside = false, dragging = false, lastX = 0, lastY = 0, dragMoved = 0;
+    // Touch gestures start out undecided — see beginDrag / the pointermove
+    // disambiguation below.
+    var pending = false, startX = 0, startY = 0;
+    var torchX = window.innerWidth / 2, torchY = window.innerHeight * 0.4;
+    var torchTX = torchX, torchTY = torchY;
+
+    function overGem(x, y) {
+      var S = Gem.state;
+      if (openPanel || S.op < 0.5 || S.rad < 20) return false;
+      var dx = x - S.cx, dy = y - S.cy;
+      return Math.sqrt(dx * dx + dy * dy) < S.rad * 0.92;
+    }
+
+    function aimLightAt(x, y) {
+      var nx = (x / window.innerWidth) * 2 - 1;
+      var ny = (y / window.innerHeight) * 2 - 1;
+      var v = [nx * 0.95, -ny * 0.95 + 0.20, -0.78];
+      var L = Math.hypot(v[0], v[1], v[2]);
+      Gem.state.lightT = [v[0] / L, v[1] / L, v[2] / L];
+    }
+
+    window.addEventListener('pointermove', function (e) {
+      pointerInside = true;
+      document.body.classList.add('has-pointer');
+      torchTX = e.clientX; torchTY = e.clientY;
+      Dust.pointer(e.clientX, e.clientY);
+      aimLightAt(e.clientX, e.clientY);
+
+      // Undecided touch: a mostly-vertical move is the page scrolling and we
+      // let it go for good; a mostly-horizontal one becomes a spin.
+      if (pending) {
+        var tdx = e.clientX - startX, tdy = e.clientY - startY;
+        if (Math.abs(tdy) > 10 && Math.abs(tdy) >= Math.abs(tdx)) { pending = false; return; }
+        if (Math.abs(tdx) > 8) { beginDrag(e); lastX = e.clientX; lastY = e.clientY; }
+        else return;
+      }
+
+      if (dragging) {
+        var dx = e.clientX - lastX, dy = e.clientY - lastY;
+        lastX = e.clientX; lastY = e.clientY;
+        dragMoved += Math.abs(dx) + Math.abs(dy);
+        var S = Gem.state;
+        // Trackball. Screen y runs down and the camera looks along +z, so
+        // both deltas invert to make the grabbed face follow the cursor.
+        var rx = -dx * 0.0068, ry = -dy * 0.0068;
+        S.q = qNorm(qMul(qMul(qAxis(0, 1, 0, rx), qAxis(1, 0, 0, ry)), S.q));
+        S.vel[0] = S.vel[0] * 0.55 + rx * 0.45;
+        S.vel[1] = S.vel[1] * 0.55 + ry * 0.45;
+        S.aim = null;              // taking the wheel cancels facet framing
+        clearFacetLit();
+      } else if (e.pointerType === 'mouse') {
+        document.body.classList.toggle('gem-over', overGem(e.clientX, e.clientY));
+      }
+    }, { passive: true });
+
+    function beginDrag(e) {
+      pending = false;
+      dragging = true;
+      document.body.classList.add('gem-grab');
+      Gem.state.spin = 0;
+      try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+
+    window.addEventListener('pointerdown', function (e) {
+      if (!overGem(e.clientX, e.clientY)) return;
+      startX = lastX = e.clientX;
+      startY = lastY = e.clientY;
+      dragMoved = 0;
+      if (e.pointerType === 'touch') {
+        /* Do NOT claim a touch yet. On a phone the stone sits behind the
+           hero copy and fills most of the screen, so grabbing every touch
+           here — and then preventDefault()-ing touchmove — would make it
+           impossible to scroll past the hero. Wait for the first move and
+           only take the gesture if it's horizontal. */
+        pending = true;
+        return;
+      }
+      beginDrag(e);
+    });
+
+    function endDrag() {
+      var wasPending = pending;
+      pending = false;
+      if (!dragging && !wasPending) return;
+      dragging = false;
+      document.body.classList.remove('gem-grab');
+      // A tap (rather than a drag) on the stone throws a few shards.
+      if (dragMoved < 6) {
+        var S = Gem.state;
+        Dust.burst(S.cx, S.cy, rgbOf(S.glowColor), 14);
+        S.flash = 1;
+      }
+    }
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', function () {
+      pending = false;
+      dragging = false;
+      document.body.classList.remove('gem-grab');
+    });
+    window.addEventListener('pointerleave', function () {
+      pointerInside = false;
+      document.body.classList.remove('has-pointer');
+      Dust.pointer(-1e5, -1e5);
+    });
+
+    // Touch: allow dragging the stone without hijacking page scroll unless
+    // the gesture actually starts on the gem.
+    document.addEventListener('touchmove', function (e) {
+      if (dragging) e.preventDefault();
+    }, { passive: false });
+
+    function rgbOf(c) {
+      return [Math.round(clamp(c[0], 0, 1) * 255), Math.round(clamp(c[1], 0, 1) * 255), Math.round(clamp(c[2], 0, 1) * 255)].join(', ');
+    }
+
+    /* ===================================================================
+       5. The collection — facets, lighting and panels.
+       =================================================================== */
+    var facets = [].slice.call(document.querySelectorAll('.facet'));
+    var stage = document.getElementById('stage');
+    var panelHost = document.getElementById('panelHost');
+    var scrim = document.getElementById('panelScrim');
+    var openPanel = null, openFacet = null, lastFocus = null, openTimer = null;
+    var idleCycle = 0, idleIndex = 0, userTouched = false;
+
+    // The three product facets map onto crown mains 0, 3 and 6 of the cut.
+    function crownPlane(k) { return CUT.crown[k % CUT.crown.length]; }
+
+    function clearGlowTarget() {
+      for (var i = 0; i < NP; i++) Gem.state.glowT[i] = 0;
+    }
+
+    // Light one crown main, plus its two neighbouring upper-girdle halves
+    // and the pavilion main below it, so the glow looks like it belongs to
+    // a region of the stone rather than a single triangle.
+    function glowFacet(k) {
+      clearGlowTarget();
+      var g = Gem.state.glowT;
+      g[crownPlane(k)] = 0.85;
+      g[34 + (k % 8)] = 0.40;
+      g[34 + ((k + 7) % 8)] = 0.40;
+      g[17 + (k % 8)] = 0.26;
+      g[0] = 0.14;                       // a little through the table
+    }
+
+    function setLook(name) {
+      var L = LOOKS[name] || LOOKS.base;
+      Gem.state.look = L;
+      document.documentElement.style.setProperty('--app', L.css);
+    }
+
+    function presentFacet(name, k, lock) {
+      setLook(name);
+      glowFacet(k);
+      Gem.state.glowColorT = LOOKS[name].tint;
+      // Aim that facet's normal at the camera, tipped slightly up-left so
+      // it never looks like a flat coin.
+      var n = CUT.planes[crownPlane(k)];
+      Gem.state.aim = [n[0], n[1], n[2]];
+      Gem.state.spin = 0;
+      if (lock) userTouched = true;
+    }
+
+    function releaseFacet() {
+      setLook('base');
+      clearGlowTarget();
+      Gem.state.glowColorT = LOOKS.base.tint;
+      Gem.state.aim = null;
+      Gem.state.spin = REDUCED ? 0 : 0.16;
+    }
+
+    function clearFacetLit() {
+      facets.forEach(function (f) { f.classList.remove('lit'); });
+    }
+
+    /* Selecting a facet is a deliberate act, not a hover. Merely passing the
+       cursor over a callout used to retune the whole stone, which read as
+       twitchy — and because the panel opened on the same click, you never
+       actually saw the stone turn. Now a click selects (stone rotates and
+       retints, callout lights, shards), and the panel follows a beat later
+       so the rotation gets to land. Hover stays purely local: the leader
+       line extends and the label brightens, in that product's own colour. */
+    function selectFacet(btn, app, k) {
+      userTouched = true;                 // and the idle demo stands down
+      idleCycle = 0;
+      clearFacetLit();
+      btn.classList.add('lit');
+      presentFacet(app, k, true);
+      var S = Gem.state;
+      Dust.burst(S.cx, S.cy, rgbOf(LOOKS[app].tint), 22);
+      S.flash = 1;
+    }
+
+    facets.forEach(function (btn) {
+      var app = btn.getAttribute('data-app');
+      var kk = parseInt(btn.getAttribute('data-facet'), 10);   // crown main 0, 3 or 6
+
+      btn.addEventListener('click', function () {
+        if (openPanel) return;
+        selectFacet(btn, app, kk);
+        clearTimeout(openTimer);
+        openTimer = setTimeout(function () {
+          openTimer = null;
+          open(btn, app, kk);
+        }, REDUCED ? 0 : 340);
+      });
+    });
+
+    function open(btn, app, k) {
+      var id = btn.getAttribute('aria-controls');
+      var panel = document.getElementById(id);
+      if (!panel) return;
+      if (openPanel) closePanel(true);
+
+      lastFocus = btn;
+      openPanel = panel;
+      openFacet = btn;
+      btn.setAttribute('aria-expanded', 'true');
+      Gem.state.halo = 1.8;
+
+      document.body.classList.add('panel-open');
+      panel.classList.add('mounted');
+      // Force a frame so the transition actually plays.
+      void panel.offsetWidth;
+      panel.classList.add('shown');
+      var focusable = panel.querySelector('.panel-close');
+      if (focusable) focusable.focus({ preventScroll: true });
+    }
+
+    function closePanel(silent) {
+      clearTimeout(openTimer);            // a panel still queued up is cancelled
+      openTimer = null;
+      if (!openPanel) {
+        // Cancelled during the lead-in — drop the selection as well, or the
+        // stone would sit tinted with no panel to explain why.
+        clearFacetLit();
+        releaseFacet();
+        return;
+      }
+      var panel = openPanel;
+      panel.classList.remove('shown');
+      if (openFacet) openFacet.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('panel-open');
+      Gem.state.halo = 1;
+      var done = function () {
+        panel.classList.remove('mounted');
+        panel.removeEventListener('transitionend', done);
+      };
+      panel.addEventListener('transitionend', done);
+      window.setTimeout(done, 600);
+      openPanel = null;
+      openFacet = null;
+      clearFacetLit();
+      releaseFacet();
+      if (!silent && lastFocus) { try { lastFocus.focus({ preventScroll: true }); } catch (e) {} }
+    }
+
+    panelHost.addEventListener('click', function (e) {
+      if (e.target.closest('.panel-close')) { closePanel(); return; }
+      // Clicking the frosted surround (not the panel) closes it too.
+      if (!e.target.closest('.panel')) closePanel();
+    });
+    scrim.addEventListener('click', function () { closePanel(); });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      // openTimer covers the beat between selecting a facet and the panel
+      // arriving, so Escape in that window cancels it rather than being lost.
+      if (openPanel || openTimer) { closePanel(); return; }
+      var dd = document.getElementById('appsDropdown');
+      if (dd && dd.getAttribute('data-open') === 'true') {
+        dd.removeAttribute('data-open');
+        document.getElementById('appsToggle').setAttribute('aria-expanded', 'false');
+        document.getElementById('appsToggle').focus();
+      }
+    });
+
+    // Keep focus inside an open panel.
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab' || !openPanel) return;
+      var items = openPanel.querySelectorAll('a[href], button, input, textarea, [tabindex]:not([tabindex="-1"])');
+      if (!items.length) return;
+      var first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+
+    /* ===================================================================
+       6. Reveals — rise-in blocks and word-by-word headline shattering.
+       =================================================================== */
+    function shatter(el) {
+      if (el.getAttribute('data-done')) return;
+      el.setAttribute('data-done', '1');
+      (function walk(node) {
+        [].slice.call(node.childNodes).forEach(function (kid) {
+          if (kid.nodeType === 3) {
+            var frag = document.createDocumentFragment();
+            kid.textContent.split(/(\s+)/).forEach(function (tok) {
+              if (!tok) return;
+              if (/^\s+$/.test(tok)) { frag.appendChild(document.createTextNode(tok)); return; }
+              var w = document.createElement('span'); w.className = 'w';
+              var inner = document.createElement('span'); inner.className = 'w-i';
+              inner.textContent = tok;
+              w.appendChild(inner);
+              frag.appendChild(w);
+            });
+            node.replaceChild(frag, kid);
+          } else if (kid.nodeType === 1 && kid.className !== 'w') {
+            walk(kid);
+          }
+        });
+      })(el);
+      [].slice.call(el.querySelectorAll('.w-i')).forEach(function (n, i) {
+        n.style.transitionDelay = (i * 55) + 'ms';
+      });
+    }
+
+    var toReveal = [].slice.call(document.querySelectorAll('.rise, [data-shatter]'));
+    if (!REDUCED) {
+      toReveal.forEach(function (el) { if (el.hasAttribute('data-shatter')) shatter(el); });
+    }
+    if ('IntersectionObserver' in window && !REDUCED) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add('is-in');
+          io.unobserve(en.target);
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+      toReveal.forEach(function (el) { io.observe(el); });
+    } else {
+      toReveal.forEach(function (el) { el.classList.add('is-in'); });
+    }
+
+    /* ===================================================================
+       7. Nav chrome
+       =================================================================== */
+    var nav = document.getElementById('nav');
+    var scrollbar = document.getElementById('scrollbar');
 
     (function () {
-      var form    = document.getElementById('contactForm');
-      var status  = document.getElementById('contactStatus');
-      if (!form) return;
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        var data    = new FormData(form);
-        var name    = String(data.get('name')    || '').trim();
-        var email   = String(data.get('email')   || '').trim();
-        var message = String(data.get('message') || '').trim();
-        if (!name || !message || !EMAIL_RE.test(email)) {
-          setStatus(status, 'Please fill out all fields with a valid email.', 'error');
-          return;
+      var wrap = document.getElementById('appsDropdown');
+      var toggle = document.getElementById('appsToggle');
+      if (!wrap || !toggle) return;
+      function isOpen() { return wrap.getAttribute('data-open') === 'true'; }
+      toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (isOpen()) { wrap.removeAttribute('data-open'); toggle.setAttribute('aria-expanded', 'false'); }
+        else { wrap.setAttribute('data-open', 'true'); toggle.setAttribute('aria-expanded', 'true'); }
+      });
+      document.addEventListener('click', function (e) {
+        if (isOpen() && !wrap.contains(e.target)) {
+          wrap.removeAttribute('data-open');
+          toggle.setAttribute('aria-expanded', 'false');
         }
-        setStatus(status, 'Sending…', null);
-        submit(form, CONTACT_ENDPOINT, data).then(function () {
-          form.reset();
-          setStatus(status, "Got it — we'll be in touch soon.", 'ok');
-        }).catch(function () {
-          setStatus(status, 'Something went wrong. Email rubinsteindrew@gmail.com directly.', 'error');
-        });
+      });
+      wrap.addEventListener('click', function (e) {
+        if (e.target.closest('a')) { wrap.removeAttribute('data-open'); toggle.setAttribute('aria-expanded', 'false'); }
       });
     })();
 
-    // Generic submit: POSTs FormData to `endpoint` if set, otherwise
-    // resolves after a short delay (preview mode).
-    function submit(form, endpoint, data) {
-      if (!endpoint) {
-        return new Promise(function (resolve) { setTimeout(resolve, 450); });
+    /* ===================================================================
+       8. Main loop
+       =================================================================== */
+    var last = 0, hidden = false;
+    var lastAnchor = null;
+    var off = { x: 0, y: 0, r: 0 };
+    document.addEventListener('visibilitychange', function () { hidden = document.hidden; });
+
+    function frame(now) {
+      requestAnimationFrame(frame);
+      if (hidden) { last = now; return; }
+      var dt = last ? Math.min(now - last, 50) : 16;
+      last = now;
+      var S = Gem.state;
+      var k = 1 - Math.exp(-dt / 1000 * 6.5);       // critically-damped-ish
+
+      // --- entrance ---
+      if (S.reveal < 1) S.reveal = Math.min(1, S.reveal + dt / 950);
+      var rv = 1 - Math.pow(1 - S.reveal, 3);
+
+      /* --- placement ---
+         The stone tracks its anchor EXACTLY, and carries a separate offset
+         that decays to zero. Easing the position itself would leave the gem
+         a dozen frames behind the page during a scroll, which reads as
+         stutter; this way scrolling is pixel-locked and only a change of
+         anchor produces a glide. */
+      var anchorEl = updateTargets();
+      var radT = S.trad * (0.42 + 0.58 * rv);
+
+      if (S.cx === 0 && S.cy === 0) {
+        S.cx = S.tcx; S.cy = S.tcy; S.rad = radT;   // first frame: land on it
+        lastAnchor = anchorEl;
+      } else if (anchorEl && anchorEl !== lastAnchor) {
+        // Hand the current screen position over as an offset, so switching
+        // anchors is a glide from where it already was rather than a jump.
+        off.x = S.cx - S.tcx;
+        off.y = S.cy - S.tcy;
+        off.r = S.rad - radT;
+        lastAnchor = anchorEl;
       }
+
+      var decay = Math.exp(-dt / 1000 * 3.6);
+      off.x *= decay; off.y *= decay; off.r *= decay;
+      if (Math.abs(off.x) < 0.05) off.x = 0;
+      if (Math.abs(off.y) < 0.05) off.y = 0;
+      if (Math.abs(off.r) < 0.05) off.r = 0;
+
+      S.cx  = S.tcx + off.x;
+      S.cy  = S.tcy + off.y;
+      S.rad = radT + off.r;
+      S.op  = lerp(S.op, S.top_, k);
+
+      // --- orientation ---
+      if (S.aim) {
+        // Proportional controller: recompute the shortest arc from where the
+        // facet currently points to where we want it, then take a slice.
+        var cur = qRot(S.q, S.aim);
+        var want = [0.16, 0.30, -1];
+        var L = Math.hypot(want[0], want[1], want[2]);
+        want = [want[0] / L, want[1] / L, want[2] / L];
+        var dq = qFromTo(cur, want);
+        S.q = qNorm(qMul(qScale(dq, clamp(dt / 1000 * 4.2, 0, 1)), S.q));
+        S.vel[0] *= 0.88; S.vel[1] *= 0.88;
+      } else if (!dragging) {
+        // Inertia from the last drag, decaying into the idle spin.
+        S.vel[0] *= Math.pow(0.945, dt / 16.67);
+        S.vel[1] *= Math.pow(0.945, dt / 16.67);
+        var spin = REDUCED ? 0 : S.spin * dt / 1000;
+        S.q = qNorm(qMul(qMul(qAxis(0, 1, 0, S.vel[0] + spin), qAxis(1, 0, 0, S.vel[1])), S.q));
+      }
+
+      // --- light, colour, glow ---
+      for (var i = 0; i < 3; i++) {
+        S.light[i] = lerp(S.light[i], S.lightT[i], 1 - Math.exp(-dt / 1000 * 5));
+        S.absorb[i] = lerp(S.absorb[i], S.look.absorb[i], 1 - Math.exp(-dt / 1000 * 3.2));
+        S.tint[i] = lerp(S.tint[i], S.look.tint[i], 1 - Math.exp(-dt / 1000 * 3.2));
+        S.glowColor[i] = lerp(S.glowColor[i], S.glowColorT[i], 1 - Math.exp(-dt / 1000 * 4));
+      }
+      S.amt = lerp(S.amt, S.look.amt, 1 - Math.exp(-dt / 1000 * 3.2));
+      var gk = 1 - Math.exp(-dt / 1000 * 4.5);
+      for (i = 0; i < NP; i++) S.glow[i] = lerp(S.glow[i], S.glowT[i], gk);
+      S.flash *= Math.pow(0.90, dt / 16.67);
+      if (!pointerInside) {
+        // With no cursor, drift the key light so the stone keeps sparkling.
+        var t = now / 1000;
+        var v = [Math.sin(t * 0.23) * 0.8, 0.35 + Math.cos(t * 0.19) * 0.35, -0.8];
+        var LL = Math.hypot(v[0], v[1], v[2]);
+        S.lightT = [v[0] / LL, v[1] / LL, v[2] / LL];
+      }
+
+      // --- idle demo: until the visitor touches a facet themselves, cycle
+      //     through them so the interaction is discoverable without a hover.
+      if (!openPanel && !dragging && !userTouched && !REDUCED) {
+        var sr = stage ? stage.getBoundingClientRect() : null;
+        var inView = !!sr && sr.top < window.innerHeight * 0.7 && sr.bottom > window.innerHeight * 0.3;
+        if (!inView) {
+          idleCycle = 0;
+          if (S.aim) { clearFacetLit(); releaseFacet(); }   // let it spin again
+        } else {
+          idleCycle += dt;
+          if (idleCycle > 3400) {
+            idleCycle = 0;
+            var names = ['clubhouse', 'cube', 'next'];
+            var ks = [0, 3, 6];
+            clearFacetLit();
+            facets[idleIndex % 3].classList.add('lit');
+            presentFacet(names[idleIndex % 3], ks[idleIndex % 3], false);
+            idleIndex++;
+          }
+        }
+      }
+
+      // --- torch ---
+      torchX = lerp(torchX, torchTX, 1 - Math.exp(-dt / 1000 * 7));
+      torchY = lerp(torchY, torchTY, 1 - Math.exp(-dt / 1000 * 7));
+      torch.style.transform = 'translate3d(' + torchX.toFixed(1) + 'px,' + torchY.toFixed(1) + 'px,0)';
+
+      // --- chrome ---
+      var sy = window.pageYOffset || document.documentElement.scrollTop;
+      nav.classList.toggle('stuck', sy > 24);
+      var max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      scrollbar.style.transform = 'scaleX(' + (sy / max).toFixed(4) + ')';
+
+      // --- render ---
+      if (Gem.ok) {
+        // Below a whisker of opacity there is nothing to shade — just make
+        // sure we aren't leaving the previous frame on screen.
+        if (S.op > 0.004) Gem.draw(); else Gem.wipe();
+      } else {
+        // Keep the static stand-in glued to the same anchor.
+        var f = gemFallback;
+        var d = S.rad * 2;
+        f.style.width = d + 'px';
+        f.style.height = d + 'px';
+        f.style.left = (S.cx - S.rad) + 'px';
+        f.style.top = (S.cy - S.rad) + 'px';
+        f.style.opacity = S.op.toFixed(3);
+        if (!REDUCED) f.style.transform = 'rotate(' + (now / 90).toFixed(2) + 'deg)';
+      }
+      Dust.tick(dt, now);
+      if (Gem.ok && Gem.watch) Gem.watch(dt);
+    }
+    requestAnimationFrame(frame);
+
+    var rT = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(rT);
+      rT = setTimeout(function () {
+        if (Gem.resize) Gem.resize();
+        Dust.resize();
+      }, 120);
+    });
+
+    /* ===================================================================
+       9. Forms
+
+       Both post to Formspree. To repoint them, create a form at
+       https://formspree.io and paste its endpoint below. Anything that
+       accepts a multipart POST (Getform, Basin, Netlify Forms, or your own
+       serverless function on Resend / Postmark) works unchanged.
+       =================================================================== */
+    var CONTACT_ENDPOINT   = 'https://formspree.io/f/xbdbwloa';
+    var SUBSCRIBE_ENDPOINT = 'https://formspree.io/f/xjgzlkwp';
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    function setStatus(el, msg, state) {
+      el.textContent = msg;
+      if (state) el.setAttribute('data-state', state); else el.removeAttribute('data-state');
+      el.hidden = !msg;
+    }
+
+    function post(endpoint, data) {
+      if (!endpoint) return new Promise(function (r) { setTimeout(r, 420); });
       return fetch(endpoint, {
         method: 'POST',
         headers: { 'Accept': 'application/json' },
@@ -914,6 +2696,65 @@
         return res;
       });
     }
+
+    function celebrate(el, rgb) {
+      var r = el.getBoundingClientRect();
+      Dust.burst(r.left + r.width / 2, r.top + r.height / 2, rgb, 22);
+      Gem.state.flash = 1;
+    }
+
+    (function () {
+      var form = document.getElementById('contactForm');
+      var status = document.getElementById('contactStatus');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var data = new FormData(form);
+        var name = String(data.get('name') || '').trim();
+        var email = String(data.get('email') || '').trim();
+        var msg = String(data.get('message') || '').trim();
+        if (!name || !msg || !EMAIL_RE.test(email)) {
+          setStatus(status, 'Please fill out all fields with a valid email.', 'error');
+          return;
+        }
+        var btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        setStatus(status, 'Sending…', null);
+        post(CONTACT_ENDPOINT, data).then(function () {
+          form.reset();
+          setStatus(status, "Got it — we'll be in touch soon.", 'ok');
+          celebrate(btn, '225, 29, 60');
+        }).catch(function () {
+          setStatus(status, 'Something went wrong. Email contact@rubiventures.com directly.', 'error');
+        }).then(function () { btn.disabled = false; });
+      });
+    })();
+
+    (function () {
+      var form = document.getElementById('subscribeForm');
+      var status = document.getElementById('subscribeStatus');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var data = new FormData(form);
+        var email = String(data.get('email') || '').trim();
+        if (!EMAIL_RE.test(email)) {
+          setStatus(status, 'That email doesn’t look right.', 'error');
+          return;
+        }
+        var btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        setStatus(status, 'Adding you…', null);
+        post(SUBSCRIBE_ENDPOINT, data).then(function () {
+          form.reset();
+          setStatus(status, "You're on the list. We'll only write when there's something to open.", 'ok');
+          celebrate(btn, '201, 191, 196');
+        }).catch(function () {
+          setStatus(status, 'Something went wrong. Email contact@rubiventures.com directly.', 'error');
+        }).then(function () { btn.disabled = false; });
+      });
+    })();
+  })();
   </script>
 </body>
 </html>
