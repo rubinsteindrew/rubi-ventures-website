@@ -532,8 +532,11 @@
       width: 100%;
       max-width: 232px;
       margin: 0 auto;
-      aspect-ratio: 9 / 19;
+      /* No aspect-ratio here: with box-sizing:border-box it would describe the
+         OUTER box, while the screenshot lives inside the 7px padding. The
+         ratio belongs on .device-inner, which is the box the image fills. */
       padding: 7px;
+      overflow: hidden;          /* hard guarantee nothing escapes the frame */
       border: 1px solid var(--line-lit);
       border-radius: 34px;
       background: linear-gradient(160deg, rgba(36, 22, 54, 0.92), rgba(26, 15, 43, 0.92));
@@ -541,15 +544,16 @@
     }
     .device-inner {
       position: relative;
-      width: 100%; height: 100%;
+      width: 100%;
+      /* Its own ratio, so it has a definite height without depending on a
+         percentage resolving against the parent — which is the fragile part
+         iOS Safari has been unreliable about. */
+      aspect-ratio: 660 / 1368;
       overflow: hidden;
       border-radius: 27px;
       background: var(--felt);
     }
     .device-screen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-    /* The Cube capture is cropped in the asset itself (status bar removed) and
-       carries this exact ratio, so it fills the frame with nothing trimmed. */
-    .device--cube { aspect-ratio: 660 / 1368; }
     .device-fallback {
       position: absolute;
       inset: 0;
