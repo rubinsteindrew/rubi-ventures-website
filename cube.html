@@ -101,15 +101,22 @@
         radial-gradient(46% 38% at 92% 26%, rgba(232, 185, 76, 0.11), transparent 72%),
         radial-gradient(60% 44% at 4% 84%, rgba(90, 46, 140, 0.24), transparent 70%);
     }
+    /* inset:0, not -50%. It never moves, so oversizing it to four times the
+       viewport just quadrupled the area that mix-blend-mode has to
+       re-composite over the moving cards each frame. */
     .grain {
       position: fixed;
-      inset: -50%;
+      inset: 0;
       z-index: 6;
       pointer-events: none;
       opacity: 0.05;
       mix-blend-mode: overlay;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
     }
+    /* A blend mode forces everything beneath it to re-composite, which on a
+       phone means the whole card layer, every frame. It's 5% noise — not
+       worth a frame budget. */
+    @media (max-width: 900px) { .grain { display: none; } }
 
     /* =====================================================================
        The card field — the page's ground, not a widget on it.
@@ -227,8 +234,6 @@
       pointer-events: none;
       --feather: 46px;
       background: rgba(7, 4, 12, 0.82);
-      backdrop-filter: blur(8px) saturate(118%);
-      -webkit-backdrop-filter: blur(8px) saturate(118%);
       -webkit-mask-image:
         linear-gradient(to right,  transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent),
         linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
@@ -240,6 +245,19 @@
     }
     @media (max-width: 640px) {
       .veil::before { inset: -30px -30px; --feather: 26px; }
+    }
+    /* The backdrop blur is desktop-only, and deliberately so. Blurring the
+       backdrop means re-blurring a moving layer every single frame, across
+       four elements — one of them the full height of the privacy policy.
+       That was the most expensive thing on the page by a wide margin and the
+       main reason the cards felt like they were dragging on a phone. The dark
+       fill carries all the contrast on its own, so going without costs
+       nothing legible. */
+    @media (min-width: 900px) and (hover: hover) {
+      .veil::before {
+        backdrop-filter: blur(8px) saturate(118%);
+        -webkit-backdrop-filter: blur(8px) saturate(118%);
+      }
     }
 
     /* ----- Layout ----- */
@@ -313,9 +331,9 @@
       position: sticky;
       top: 0;
       z-index: 30;
-      background: rgba(9, 5, 15, 0.88);
-      backdrop-filter: blur(16px) saturate(150%);
-      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      /* Nearly opaque, so the blur below is cosmetic — and it's another
+         per-frame blur of the moving card layer, so phones skip it. */
+      background: rgba(9, 5, 15, 0.94);
       border-bottom: 1px solid var(--line);
     }
     .topbar-inner {
@@ -329,6 +347,13 @@
       gap: 16px;
     }
     @media (min-width: 768px) { .topbar-inner { padding: 0 40px; } }
+    @media (min-width: 900px) and (hover: hover) {
+      .topbar {
+        background: rgba(9, 5, 15, 0.86);
+        backdrop-filter: blur(16px) saturate(150%);
+        -webkit-backdrop-filter: blur(16px) saturate(150%);
+      }
+    }
     .back {
       display: inline-flex;
       align-items: center;
@@ -762,8 +787,10 @@
       return out;
     }
 
+    // Each card is two composited faces held in a 3D context, so the count is
+    // a layer count too. A phone gets fewer.
     var narrow = window.innerWidth < 700;
-    var COUNT  = narrow ? 14 : 26;
+    var COUNT  = narrow ? 10 : 26;
     var cards  = [];
 
     // Depth bounds. Nearer cards are bigger (perspective does that for free),
@@ -869,26 +896,49 @@
       return window.pageYOffset || document.documentElement.scrollTop || 0;
     }
 
-    var curr = 0, target = 0, raf = null, last = 0;
+    /* Touch scrolling is already continuous, so smoothing it only buys lag.
+       A mouse wheel arrives in coarse jumps and genuinely benefits. */
+    var COARSE = window.matchMedia('(pointer: coarse)').matches;
+
+    var curr = 0, raf = null, last = 0, lastS = -1, idle = 0;
 
     function tick(now) {
-      raf = null;
+      /* Read the scroll position HERE, every frame, rather than trusting the
+         scroll event to have told us. iOS defers scroll events during
+         momentum scrolling — precisely when the cards are moving fastest —
+         so driving the pose off the event left them visibly dragging behind
+         the page. rAF keeps ticking, so this stays in step. */
+      var s = scrollY();
       var dt = last ? Math.min((now - last) / 1000, 0.05) : 0.016;
       last = now;
-      var d = target - curr;
-      if (Math.abs(d) < 0.35) { curr = target; pose(curr); last = 0; return; }
-      curr += d * (1 - Math.exp(-dt * 13));
+
+      var moved = Math.abs(s - lastS) > 0.05;
+      lastS = s;
+
+      if (COARSE) curr = s;
+      else curr += (s - curr) * (1 - Math.exp(-dt * 18));
+      if (Math.abs(s - curr) < 0.35) curr = s;
+
       pose(curr);
+
+      /* Idle out on frames where nothing changed — but only after a short
+         grace period, so a throttled burst of scrolling doesn't keep paying
+         to spin the loop back up. Once it stops, it stops completely. */
+      if (!moved && s === curr) {
+        if (++idle > 12) { raf = null; last = 0; idle = 0; return; }
+      } else {
+        idle = 0;
+      }
       raf = requestAnimationFrame(tick);
     }
 
     function sync() {
-      target = scrollY();
+      idle = 0;
       if (raf === null) { last = 0; raf = requestAnimationFrame(tick); }
     }
 
     deal();
-    curr = target = scrollY();
+    curr = lastS = scrollY();
     pose(curr);
 
     if (!REDUCED) {
