@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Before any CSS loads the browser paints its default canvas. Without
-       this it picks white, which flashes on every load while the blocking
-       font stylesheet is still in flight. -->
+  <!-- The browser paints its default canvas before any of our CSS applies,
+       and picks white unless told otherwise. This is the only signal it has
+       that early, so it is what stops the first frame being white. -->
   <meta name="color-scheme" content="dark">
   <title>The Cube — The Drinking Game</title>
   <meta name="description" content="The Cube is a dead-simple offline drinking game. Nine piles, three by three — call higher or lower, three in a row to pass it on. No accounts, no tracking, no ads. By Rubi Ventures, LLC.">
@@ -19,18 +19,41 @@
        comes before anything external, so it applies with no network wait. -->
   <style>html,body{background:#0B0713;}</style>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Loaded non-blocking. A plain external stylesheet in <head> holds up
-       first paint until it arrives, and until then the browser shows its
-       own default canvas — which is white. That was the flash. media="print"
-       makes this a non-blocking fetch; onload promotes it once it lands, so
-       the page paints immediately in the fallback face and swaps. -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Inter+Tight:wght@400;500;600&display=swap"></noscript>
+  <!-- Fonts are self-hosted. Going via Google cost two extra DNS+TLS
+       handshakes to third-party origins (one for the CSS, another for the
+       files) before a single glyph could arrive, and the CSS was a
+       render-blocking request. Same-origin means they load on the connection
+       already open for this page, and preloading the two faces used above
+       the fold means text is rarely painted in the fallback at all. -->
+  <link rel="preload" href="/assets/fonts/bodoni-moda-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/inter-tight-normal.woff2" as="font" type="font/woff2" crossorigin>
 
   <style>
+    @font-face {
+      font-family: 'Bodoni Moda';
+      font-style: italic;
+      font-weight: 400 500;
+      font-display: swap;
+      src: url('/assets/fonts/bodoni-moda-italic.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Bodoni Moda';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: swap;
+      src: url('/assets/fonts/bodoni-moda-normal.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Inter Tight';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: swap;
+      src: url('/assets/fonts/inter-tight-normal.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
     /* =====================================================================
        The Cube — product & privacy page for Rubi Ventures, LLC.
 
