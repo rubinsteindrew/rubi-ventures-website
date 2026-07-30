@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Cube — The Drinking Game</title>
-  <meta name="description" content="The Cube is a dead-simple offline drinking game. No accounts, no tracking, no ads — everything happens on your device. By Rubi Ventures, LLC.">
+  <meta name="description" content="The Cube is a dead-simple offline drinking game. Nine piles, three by three — call higher or lower, three in a row to pass it on. No accounts, no tracking, no ads. By Rubi Ventures, LLC.">
   <meta name="theme-color" content="#0B0713">
   <link rel="icon" type="image/svg+xml" href="/assets/cube-favicon.svg">
   <meta property="og:title" content="The Cube — The Drinking Game">
-  <meta property="og:description" content="A dead-simple offline drinking game. Nothing ever leaves your device.">
+  <meta property="og:description" content="Nine piles, three by three. Call higher or lower. Three in a row and you're out.">
   <meta property="og:type" content="website">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,9 +21,23 @@
 
        Shares the parent site's type system and dark ground so the two read
        as one studio, but swaps ruby light for the app's own casino felt and
-       gold. The centrepiece is a real die: a CSS 3D cube you can drag,
-       flick and roll. On release it decays and snaps to the nearest
-       face-aligned orientation, so it always lands on a number.
+       gold.
+
+       The whole page sits inside a thrown deck. Real CSS 3D cards hang
+       frozen across a fixed, full-viewport layer at a spread of depths;
+       scrolling moves them, each at a rate set by how far away it is, so
+       the page reads as a camera panning past cards suspended in the air.
+
+       Position is a pure function of scroll offset — no simulation, no
+       accumulated state — so scrolling back up rewinds it exactly, and when
+       you stop, the cards genuinely stop. No timers, no frames, no work.
+
+       Legibility is handled structurally rather than by keeping the cards
+       faint: every block of text sits on a "veil", a feathered pocket of
+       darker background (see .veil). That buys the cards a real presence —
+       13% to 38% opacity — while leaving the dimmest body text at 7.4:1,
+       comfortably past WCAG AA. If you add a text block to this page, give
+       it the veil; without one, dim text over a near card falls to 2.7:1.
 
        Self-contained by design — no build step, no dependencies.
        ===================================================================== */
@@ -39,8 +53,16 @@
       --gold-deep: #8A6412;
       --ruby:      #E11D3C;
       --ink:       #F4EEE2;
-      --ink-dim:   rgba(244, 238, 226, 0.66);
-      --ink-faint: rgba(244, 238, 226, 0.42);
+      /* Solid, not rgba. Semi-transparent body text over a layer of moving
+         cards picks up whatever happens to be behind it, which is how a page
+         like this quietly fails contrast. Flattened, these are the same
+         colours they resolved to against the old background. */
+      --ink-dim:   #C0B9AF;
+      --ink-faint: #ADA69D;
+
+      --card-face: #FBF6EA;
+      --card-ink:  #1B1424;
+      --card-red:  #C3213A;
 
       --display: 'Bodoni Moda', 'Didot', 'Times New Roman', Georgia, serif;
       --ui:      'Inter Tight', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -62,11 +84,11 @@
       overflow-x: hidden;
     }
     @media (max-width: 640px) { body { font-size: 16px; } }
-    img, svg, canvas { display: block; max-width: 100%; }
+    img, svg { display: block; max-width: 100%; }
     a { color: var(--gold); }
     ::selection { background: rgba(232, 185, 76, 0.30); color: #fff; }
     :focus { outline: none; }
-    :focus-visible { outline: 1px solid var(--gold-lit); outline-offset: 4px; }
+    :focus-visible { outline: 1px solid var(--gold-lit); outline-offset: 3px; }
 
     /* ----- Atmosphere ----- */
     .atmos {
@@ -82,25 +104,149 @@
     .grain {
       position: fixed;
       inset: -50%;
-      z-index: 5;
+      z-index: 6;
       pointer-events: none;
       opacity: 0.05;
       mix-blend-mode: overlay;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
     }
-    #shardCanvas {
+
+    /* =====================================================================
+       The card field — the page's ground, not a widget on it.
+       ===================================================================== */
+    .cardfield {
       position: fixed;
       inset: 0;
-      z-index: 4;
-      width: 100%; height: 100%;
+      z-index: 1;
+      overflow: hidden;
       pointer-events: none;
+      perspective: 1100px;
+      perspective-origin: 50% 42%;
+    }
+    .cardfield .deck {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+    .fly {
+      --cw: 58px;
+      position: absolute;
+      left: 0; top: 0;
+      width: var(--cw);
+      height: calc(var(--cw) * 1.4);
+      margin: calc(var(--cw) * -0.7) 0 0 calc(var(--cw) * -0.5);
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    @media (max-width: 640px) { .fly { --cw: 46px; } }
+
+    .fly .side {
+      position: absolute;
+      inset: 0;
+      border-radius: calc(var(--cw) * 0.09);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .fly .face {
+      background: linear-gradient(158deg, var(--card-face), #E7DCC4);
+      color: var(--card-ink);
+    }
+    .fly .face.red { color: var(--card-red); }
+    .fly .back {
+      transform: rotateY(180deg);
+      background:
+        repeating-linear-gradient(45deg,  rgba(232, 185, 76, 0.30) 0 1.5px, transparent 1.5px 6px),
+        repeating-linear-gradient(-45deg, rgba(232, 185, 76, 0.30) 0 1.5px, transparent 1.5px 6px),
+        linear-gradient(160deg, #452A66, #241636);
+      box-shadow: inset 0 0 0 1px rgba(232, 185, 76, 0.55);
+    }
+    /* Corner index: rank over suit, and repeated upside-down in the opposite
+       corner, the way a real card reads from either end. */
+    .fly .idx {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: var(--ui);
+      font-weight: 600;
+      font-size: calc(var(--cw) * 0.17);
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+    }
+    .fly .idx i { font-style: normal; font-size: calc(var(--cw) * 0.15); }
+    .fly .idx.tl { top: 4.5%; left: 5.5%; }
+    .fly .idx.br { bottom: 4.5%; right: 5.5%; transform: rotate(180deg); }
+
+    /* Pips, positioned individually so the count and arrangement are the
+       real ones. Anything below the midline is inverted, as on a real card. */
+    .fly .pip {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-size: calc(var(--cw) * 0.19);
+      line-height: 1;
+    }
+    .fly .pip.flip { transform: translate(-50%, -50%) rotate(180deg); }
+    .fly .pip.big { font-size: calc(var(--cw) * 0.40); }
+
+    /* Court cards get a monogram rather than a figure we can't draw. */
+    .fly .court {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: calc(var(--cw) * 0.02);
+      font-family: var(--display);
+      font-size: calc(var(--cw) * 0.42);
+      line-height: 1;
+    }
+    .fly .court i { font-style: normal; font-size: calc(var(--cw) * 0.24); }
+
+    /* -----------------------------------------------------------------
+       The veil. Text sits on a darker pocket of the background rather than
+       straight on the cards.
+
+       The mask is what makes it read as the background getting darker
+       instead of a panel: it feathers the dark fill AND the backdrop blur
+       together, which would otherwise stop at a hard rectangle. Feathering
+       is a fixed distance rather than a percentage, so a tall block like the
+       privacy policy stays covered end to end.
+
+       The fill alone carries the contrast, so the blur is pure enhancement —
+       where backdrop-filter is unsupported nothing legible changes. Likewise
+       if mask-composite is missing the layers just union, which feathers
+       less rather than failing.
+       ----------------------------------------------------------------- */
+    .veil { position: relative; }
+    .veil::before {
+      content: "";
+      position: absolute;
+      inset: -52px -56px;
+      z-index: -1;
+      pointer-events: none;
+      --feather: 46px;
+      background: rgba(7, 4, 12, 0.82);
+      backdrop-filter: blur(8px) saturate(118%);
+      -webkit-backdrop-filter: blur(8px) saturate(118%);
+      -webkit-mask-image:
+        linear-gradient(to right,  transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent),
+        linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+              mask-image:
+        linear-gradient(to right,  transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent),
+        linear-gradient(to bottom, transparent, #000 var(--feather), #000 calc(100% - var(--feather)), transparent);
+      -webkit-mask-composite: source-in;
+              mask-composite: intersect;
+    }
+    @media (max-width: 640px) {
+      .veil::before { inset: -30px -30px; --feather: 26px; }
     }
 
     /* ----- Layout ----- */
     .wrap {
       position: relative;
       z-index: 2;
-      max-width: 940px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 0 24px;
     }
@@ -108,10 +254,9 @@
     section[id] { scroll-margin-top: 84px; }
 
     .rule {
-      position: relative;
       height: 1px;
       border: 0;
-      margin: 72px 0;
+      margin: 80px 0;
       background: linear-gradient(90deg, transparent, var(--line) 12%, var(--line-lit) 50%, var(--line) 88%, transparent);
     }
 
@@ -124,9 +269,9 @@
       line-height: 1.04;
       letter-spacing: -0.015em;
     }
-    h1 { font-size: clamp(46px, 8vw, 92px); }
+    h1 { font-size: clamp(52px, 9vw, 108px); }
     h2 { font-size: clamp(24px, 3vw, 34px); font-variation-settings: 'opsz' 40; color: var(--gold); }
-    h3 { font-size: clamp(21px, 2.2vw, 26px); font-variation-settings: 'opsz' 40; }
+    h3 { font-size: clamp(21px, 2.2vw, 27px); font-variation-settings: 'opsz' 40; }
     p { margin: 0; }
     .body p + p { margin-top: 16px; }
     .body h2 { margin: 44px 0 12px; }
@@ -155,11 +300,12 @@
       font-family: var(--display);
       font-style: italic;
       font-variation-settings: 'opsz' 40;
-      font-size: clamp(20px, 2.3vw, 27px);
-      line-height: 1.3;
-      margin-top: 18px;
+      font-size: clamp(21px, 2.6vw, 30px);
+      line-height: 1.28;
+      margin-top: 20px;
+      max-width: 30ch;
     }
-    .lede { font-size: clamp(17px, 1.4vw, 19px); color: var(--ink-dim); max-width: 52ch; margin-top: 20px; }
+    .lede { font-size: clamp(17px, 1.4vw, 19px); color: var(--ink-dim); max-width: 52ch; margin-top: 22px; }
     .date { color: var(--ink-faint); font-size: 14px; margin-top: 10px; }
 
     /* ----- Top bar ----- */
@@ -167,13 +313,13 @@
       position: sticky;
       top: 0;
       z-index: 30;
-      background: rgba(11, 7, 19, 0.76);
-      backdrop-filter: blur(14px) saturate(150%);
-      -webkit-backdrop-filter: blur(14px) saturate(150%);
+      background: rgba(9, 5, 15, 0.88);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
       border-bottom: 1px solid var(--line);
     }
     .topbar-inner {
-      max-width: 940px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 0 24px;
       height: 62px;
@@ -194,7 +340,7 @@
     }
     .back:hover, .back:focus-visible { color: var(--ink); }
     .back .gm { width: 12px; height: 12px; flex: none; filter: drop-shadow(0 0 6px rgba(225, 29, 60, 0.8)); }
-    .topnav { display: flex; gap: 26px; }
+    .topnav { display: flex; gap: 24px; }
     .topnav a {
       font-size: 14px;
       text-decoration: none;
@@ -202,14 +348,16 @@
       transition: color 220ms ease;
     }
     .topnav a:hover, .topnav a:focus-visible { color: var(--gold); }
+    @media (max-width: 430px) { .topnav { gap: 16px; } .topnav a { font-size: 13px; } }
 
     /* ----- Buttons ----- */
     .btn {
       position: relative;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
-      padding: 15px 28px;
+      padding: 15px 26px;
       border: 1px solid var(--gold);
       background: transparent;
       color: var(--ink);
@@ -233,23 +381,17 @@
     }
     .btn:hover, .btn:focus-visible { color: var(--void); }
     .btn:hover::before, .btn:focus-visible::before { transform: none; }
-    .btn.solid { background: var(--gold); color: #241636; border-color: transparent; }
-    .btn.solid::before { background: var(--gold-lit); }
-    .btn.solid:hover, .btn.solid:focus-visible { color: #241636; }
 
     /* ----- Hero ----- */
-    .hero { padding: 72px 0 8px; }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 56px;
-      align-items: center;
+    .hero {
+      min-height: 86vh;
+      min-height: 86svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 72px 0 40px;
     }
-    @media (min-width: 860px) {
-      .hero { padding: 104px 0 8px; }
-      .hero-grid { grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: 40px; }
-    }
-    .lockup { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+    .lockup { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
     .logo-tile {
       width: 60px; height: 60px;
       flex: none;
@@ -269,122 +411,60 @@
       text-transform: uppercase;
       color: var(--gold);
     }
-    .hero-cta { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: center; margin-top: 38px; }
-
-    /* ----- The die -----------------------------------------------------
-       Scene sets the perspective; .die carries the live rotation; each
-       face is pushed out half a cube along its own axis.
-       ------------------------------------------------------------------ */
-    .table { position: relative; display: grid; place-items: center; padding: 24px 0 8px; }
-    .scene {
-      --sz: 168px;
-      width: var(--sz);
-      height: var(--sz);
-      perspective: 900px;
-      touch-action: none;
-      cursor: grab;
-    }
-    .scene.grabbing { cursor: grabbing; }
-    @media (max-width: 520px) { .scene { --sz: 140px; } }
-
-    /* A fixed viewing angle. The die itself snaps to quarter turns, which
-       would otherwise leave it perfectly face-on and reading as a flat
-       square; this static tilt keeps two side faces in view so it still
-       looks like a die sitting on a table. */
-    .tilt {
-      position: absolute;
-      inset: 0;
-      transform-style: preserve-3d;
-      transform: rotateX(-15deg) rotateY(-24deg);
-    }
-
-    .die {
-      position: relative;
-      width: 100%; height: 100%;
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
-    .face {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      padding: 14%;
-      gap: 6%;
-      border-radius: 16px;
-      background:
-        radial-gradient(120% 120% at 24% 18%, rgba(244, 238, 226, 0.16), transparent 62%),
-        linear-gradient(150deg, var(--felt-2), var(--felt));
-      border: 1px solid rgba(232, 185, 76, 0.34);
-      box-shadow: inset 0 0 34px rgba(0, 0, 0, 0.55);
-      backface-visibility: visible;
-    }
-    .pip {
-      align-self: center;
-      justify-self: center;
-      width: 68%;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      background: radial-gradient(circle at 34% 30%, var(--gold-lit), var(--gold) 52%, var(--gold-deep));
-      box-shadow: 0 0 12px rgba(232, 185, 76, 0.55);
-    }
-    /* Pip slots, addressed by grid position so each face is just a list. */
-    .p11 { grid-area: 1 / 1; } .p13 { grid-area: 1 / 3; }
-    .p22 { grid-area: 2 / 2; }
-    .p31 { grid-area: 3 / 1; } .p33 { grid-area: 3 / 3; }
-    .p21 { grid-area: 2 / 1; } .p23 { grid-area: 2 / 3; }
-    .p12 { grid-area: 1 / 2; } .p32 { grid-area: 3 / 2; }
-
-    /* A soft pool of light under the die, so it isn't floating in a void. */
-    .shadow {
-      position: absolute;
-      left: 50%;
-      bottom: -22px;
-      width: 200px; height: 34px;
-      transform: translateX(-50%);
-      background: radial-gradient(closest-side, rgba(232, 185, 76, 0.20), transparent);
-      filter: blur(6px);
-      pointer-events: none;
-    }
-
-    .readout {
-      margin-top: 34px;
-      min-height: 76px;
-      text-align: center;
-    }
-    .readout-num {
-      font-family: var(--display);
-      font-variation-settings: 'opsz' 96;
-      font-size: 46px;
-      line-height: 1;
-      color: var(--gold);
-    }
-    .readout-say {
-      font-size: 13px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--ink-faint);
-      margin-top: 10px;
-      min-height: 1.4em;
-    }
-    .die-hint {
-      margin-top: 6px;
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; margin-top: 38px; }
+    .hero-hint {
+      margin-top: 52px;
       font-size: 11px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--ink-faint);
-      text-align: center;
     }
+    @media (prefers-reduced-motion: reduce) { .hero-hint { display: none; } }
 
-    /* ----- Points + device ----- */
-    .showcase {
+    /* ----- Rules + points ----- */
+    .cols {
       display: grid;
       gap: 48px;
       grid-template-columns: 1fr;
-      align-items: center;
+      align-items: start;
     }
-    @media (min-width: 760px) { .showcase { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 56px; } }
+    @media (min-width: 820px) { .cols { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 60px; } }
+
+    .rules { list-style: none; padding: 0; margin: 26px 0 0; counter-reset: r; }
+    .rules li {
+      position: relative;
+      padding-left: 48px;
+      min-height: 32px;
+      margin-bottom: 22px;
+      color: var(--ink-dim);
+      font-size: 16px;
+    }
+    .rules li b { color: var(--ink); font-weight: 500; }
+    /* The diamond is the rotated element; the numeral sits upright on top of
+       it in its own box, so it isn't dragged round with the border. */
+    .rules li::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0;
+      width: 32px; height: 32px;
+      border: 1px solid var(--gold-deep);
+      background: rgba(11, 7, 19, 0.55);
+      transform: rotate(45deg);
+    }
+    .rules-num {
+      counter-increment: r;
+      position: absolute;
+      left: 0; top: 0;
+      width: 32px; height: 32px;
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      font-family: var(--display);
+      font-size: 15px;
+      line-height: 1;
+    }
+    .rules-num::before { content: counter(r); }
+
     .points { list-style: none; padding: 0; margin: 0; }
     .points li {
       position: relative;
@@ -405,13 +485,13 @@
 
     .device {
       width: 100%;
-      max-width: 236px;
+      max-width: 232px;
       margin: 0 auto;
       aspect-ratio: 9 / 19;
       padding: 7px;
       border: 1px solid var(--line-lit);
       border-radius: 34px;
-      background: linear-gradient(160deg, rgba(244, 238, 226, 0.10), rgba(244, 238, 226, 0.02));
+      background: linear-gradient(160deg, rgba(36, 22, 54, 0.92), rgba(26, 15, 43, 0.92));
       box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 60px -22px var(--gold);
     }
     .device-inner {
@@ -436,7 +516,6 @@
     .device-fallback .nm { font-family: var(--display); font-size: 20px; }
     .device-fallback .st { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
 
-    /* ----- Privacy ----- */
     .tldr {
       margin-top: 20px;
       padding: 20px 24px;
@@ -449,7 +528,7 @@
     footer {
       position: relative;
       z-index: 2;
-      margin-top: 24px;
+      margin-top: 40px;
       padding: 30px 0 64px;
       border-top: 1px solid var(--line);
       font-size: 13px;
@@ -490,7 +569,7 @@
   </svg>
 
   <div class="atmos" aria-hidden="true"></div>
-  <canvas id="shardCanvas" aria-hidden="true"></canvas>
+  <div class="cardfield" id="cardfield" aria-hidden="true"><div class="deck" id="deck"></div></div>
   <div class="grain" aria-hidden="true"></div>
 
   <div class="topbar">
@@ -501,6 +580,7 @@
       </a>
       <nav class="topnav" aria-label="The Cube">
         <a href="#about">About</a>
+        <a href="#rules">Rules</a>
         <a href="#privacy">Privacy</a>
       </nav>
     </div>
@@ -509,102 +589,75 @@
   <div class="wrap">
     <!-- ============================== Hero ============================== -->
     <section id="about" class="hero">
-      <div class="hero-grid">
-        <div>
-          <div class="lockup rise">
-            <span class="logo-tile">
-              <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
-            </span>
-            <span class="logo-word">The&nbsp;Cube</span>
-          </div>
-          <p class="eyebrow rise">A Rubi Ventures app &nbsp;·&nbsp; In development</p>
-          <h1 class="rise" data-d="1" style="margin-top:18px;">The Cube</h1>
-          <p class="tagline rise" data-d="1">
-            Want a fun game to play with your friends? Give this one a roll.
-          </p>
-          <p class="lede rise" data-d="2">
-            The dead-simple drinking game my friends actually play. Add your
-            players, pass the phone, and let the cube decide. No accounts, no
-            internet, no nonsense.
-          </p>
-          <div class="hero-cta rise" data-d="3">
-            <button type="button" class="btn solid" id="rollBtn">Roll the cube</button>
-            <a href="#privacy" class="btn">Privacy</a>
-          </div>
-        </div>
-
-        <div class="table rise" data-d="2">
-          <div class="scene" id="scene" role="button" tabindex="0"
-               aria-label="Roll the cube. Drag to spin it, or press Enter to roll.">
-            <div class="tilt">
-            <div class="die" id="die">
-              <!-- 1 -->
-              <div class="face" data-face="front"><span class="pip p22"></span></div>
-              <!-- 6 -->
-              <div class="face" data-face="back">
-                <span class="pip p11"></span><span class="pip p13"></span>
-                <span class="pip p21"></span><span class="pip p23"></span>
-                <span class="pip p31"></span><span class="pip p33"></span>
-              </div>
-              <!-- 2 -->
-              <div class="face" data-face="right">
-                <span class="pip p11"></span><span class="pip p33"></span>
-              </div>
-              <!-- 5 -->
-              <div class="face" data-face="left">
-                <span class="pip p11"></span><span class="pip p13"></span>
-                <span class="pip p22"></span>
-                <span class="pip p31"></span><span class="pip p33"></span>
-              </div>
-              <!-- 3 -->
-              <div class="face" data-face="top">
-                <span class="pip p11"></span><span class="pip p22"></span><span class="pip p33"></span>
-              </div>
-              <!-- 4 -->
-              <div class="face" data-face="bottom">
-                <span class="pip p11"></span><span class="pip p13"></span>
-                <span class="pip p31"></span><span class="pip p33"></span>
-              </div>
-            </div>
-            </div>
-            <span class="shadow" aria-hidden="true"></span>
-          </div>
-
-          <div class="readout" aria-live="polite">
-            <div class="readout-num" id="readNum">1</div>
-            <div class="readout-say" id="readSay">The cube decides</div>
-          </div>
-          <p class="die-hint">Drag to spin &nbsp;·&nbsp; flick to roll</p>
-        </div>
+      <div class="veil">
+      <div class="lockup rise">
+        <span class="logo-tile">
+          <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
+        </span>
+        <span class="logo-word">The&nbsp;Cube</span>
+      </div>
+      <p class="eyebrow rise">A Rubi Ventures app &nbsp;·&nbsp; In development</p>
+      <h1 class="rise" data-d="1" style="margin-top:18px;">The Cube</h1>
+      <p class="tagline rise" data-d="1">
+        Want a fun game to play with your friends? Give this one a roll.
+      </p>
+      <p class="lede rise" data-d="2">
+        Nine piles, three by three. Call higher or lower on any pile you like
+        — three correct back-to-back and you're out. Miss, and you drink for
+        as many seconds as there are cards in that pile.
+      </p>
+      <p class="lede rise" data-d="2">
+        Add your players, pass the phone, and let the cube decide. No
+        accounts, no internet, no nonsense.
+      </p>
+      <div class="hero-cta rise" data-d="3">
+        <a href="#rules" class="btn">How it plays</a>
+        <a href="#privacy" class="btn">Privacy</a>
+      </div>
+      <p class="hero-hint rise" data-d="3">Scroll — the deck is still in the air</p>
       </div>
     </section>
 
     <hr class="rule">
 
-    <!-- ============================ Showcase ============================ -->
-    <section class="showcase">
+    <!-- ============================== Rules ============================= -->
+    <section id="rules" class="cols veil">
       <div>
         <p class="eyebrow rise">How it plays</p>
-        <h3 class="rise" data-d="1" style="margin:18px 0 24px;">Nothing to set up. Nothing to sign in to.</h3>
-        <ul class="points rise" data-d="2">
-          <li>Set up a game in seconds — just add player names.</li>
+        <h3 class="rise" data-d="1" style="margin:18px 0 0;">Nine piles. Three in a row. That's the whole game.</h3>
+        <ol class="rules rise" data-d="2">
+          <li><span class="rules-num"></span><b>Nine cards go down, three by three.</b> Each one is the top of its own pile.</li>
+          <li><span class="rules-num"></span><b>Pick any pile and call it</b> — higher or lower than the card showing.</li>
+          <li><span class="rules-num"></span><b>The next card lands on that pile.</b> Right, and you're one closer. The pile gets deeper either way.</li>
+          <li><span class="rules-num"></span><b>Miss, and you drink</b> for as many seconds as there are cards in that pile. Then you're still up — keep calling.</li>
+          <li><span class="rules-num"></span><b>Three correct back-to-back and you're out.</b> Pass the phone. The piles stay where they are for the next player.</li>
+        </ol>
+        <p class="lede" style="margin-top:26px;">
+          Which is the catch: every miss makes the table more expensive, and
+          the pile you keep dodging is the one someone eventually has to call.
+        </p>
+      </div>
+      <div>
+        <p class="eyebrow rise">Nothing to set up</p>
+        <ul class="points rise" data-d="1" style="margin-top:22px;">
+          <li>Add player names and you're playing in seconds.</li>
           <li>Works entirely offline. Nothing ever leaves your phone.</li>
           <li>No sign-up, no accounts, no tracking, no ads.</li>
           <li>Rated 18+. Built for adults of legal drinking age.</li>
         </ul>
-      </div>
-      <div class="rise" data-d="2">
-        <div class="device" role="img" aria-label="The Cube app on a phone">
-          <div class="device-inner">
-            <div class="device-fallback" aria-hidden="true">
-              <span class="logo-tile" style="width:44px;height:44px;border-radius:12px;">
-                <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
-              </span>
-              <span class="nm">The Cube</span>
-              <span class="st">In development</span>
+        <div class="rise" data-d="2" style="margin-top:40px;">
+          <div class="device" role="img" aria-label="The Cube app on a phone">
+            <div class="device-inner">
+              <div class="device-fallback" aria-hidden="true">
+                <span class="logo-tile" style="width:44px;height:44px;border-radius:12px;">
+                  <img src="assets/cube-logo.png" alt="" onerror="this.style.display='none'">
+                </span>
+                <span class="nm">The Cube</span>
+                <span class="st">In development</span>
+              </div>
+              <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
+                   onerror="this.style.display='none'">
             </div>
-            <img src="assets/cube-screenshot.png" alt="" class="device-screen" loading="lazy" decoding="async"
-                 onerror="this.style.display='none'">
           </div>
         </div>
       </div>
@@ -613,7 +666,7 @@
     <hr class="rule">
 
     <!-- ============================= Privacy ============================ -->
-    <section id="privacy" class="body">
+    <section id="privacy" class="body veil">
       <p class="eyebrow rise">Legal</p>
       <h1 class="rise" data-d="1" style="font-size:clamp(34px,5.6vw,58px); margin-top:18px;">Privacy Policy</h1>
       <p class="date rise" data-d="1">Effective date: July 20, 2026</p>
@@ -651,7 +704,7 @@
       <a href="mailto:contact@rubiventures.com">contact@rubiventures.com</a>.</p>
     </section>
 
-    <footer>
+    <footer class="veil">
       <span>The Cube &nbsp;·&nbsp; Please drink responsibly.</span>
       <span><a href="/">Rubi Ventures, LLC</a> &nbsp;·&nbsp; © 2026</span>
     </footer>
@@ -662,266 +715,190 @@
     'use strict';
 
     var REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+    var field = document.getElementById('cardfield');
+    var deck  = document.getElementById('deck');
 
     /* ===================================================================
-       1. Lay the die out in 3D.
+       1. Build the deck.
 
-       CSS space is x right, y down, z toward the viewer. Each face starts
-       facing +z, so pushing it out with translateZ after its own rotation
-       lands it on the right side of the cube — the standard recipe.
+       Each card is a real 3D object with a face and a back, so as it turns
+       you see both — which is most of the charm. Everything about a card is
+       drawn once; only its transform changes after that.
        =================================================================== */
-    var scene = document.getElementById('scene');
-    var die   = document.getElementById('die');
-    var readNum = document.getElementById('readNum');
-    var readSay = document.getElementById('readSay');
+    var RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    var SUITS = [['♠', 0], ['♥', 1], ['♦', 1], ['♣', 0]];   // [glyph, isRed]
 
-    var FACES = [
-      { key: 'front',  pips: 1, rot: '',                 n: [ 0,  0,  1] },
-      { key: 'back',   pips: 6, rot: 'rotateY(180deg) ', n: [ 0,  0, -1] },
-      { key: 'right',  pips: 2, rot: 'rotateY(90deg) ',  n: [ 1,  0,  0] },
-      { key: 'left',   pips: 5, rot: 'rotateY(-90deg) ', n: [-1,  0,  0] },
-      { key: 'top',    pips: 3, rot: 'rotateX(90deg) ',  n: [ 0, -1,  0] },
-      { key: 'bottom', pips: 4, rot: 'rotateX(-90deg) ', n: [ 0,  1,  0] }
-    ];
+    /* Real pip arrangements — a four shows four, a ten shows ten. These are
+       the standard Anglo-American layouts: singles run down the centre, then
+       two columns at the sides, and nine and ten add a third and fourth row
+       to those columns with one or two pips filling the middle. */
+    var PL = 0.32, PC = 0.5, PR = 0.68;
+    var LAYOUTS = {
+      'A':  [[PC, 0.50]],
+      '2':  [[PC, 0.14], [PC, 0.86]],
+      '3':  [[PC, 0.14], [PC, 0.50], [PC, 0.86]],
+      '4':  [[PL, 0.14], [PR, 0.14], [PL, 0.86], [PR, 0.86]],
+      '5':  [[PL, 0.14], [PR, 0.14], [PC, 0.50], [PL, 0.86], [PR, 0.86]],
+      '6':  [[PL, 0.14], [PR, 0.14], [PL, 0.50], [PR, 0.50], [PL, 0.86], [PR, 0.86]],
+      '7':  [[PL, 0.14], [PR, 0.14], [PC, 0.32], [PL, 0.50], [PR, 0.50], [PL, 0.86], [PR, 0.86]],
+      '8':  [[PL, 0.14], [PR, 0.14], [PC, 0.32], [PL, 0.50], [PR, 0.50], [PC, 0.68], [PL, 0.86], [PR, 0.86]],
+      '9':  [[PL, 0.14], [PR, 0.14], [PL, 0.38], [PR, 0.38], [PC, 0.50], [PL, 0.62], [PR, 0.62], [PL, 0.86], [PR, 0.86]],
+      '10': [[PL, 0.14], [PR, 0.14], [PC, 0.26], [PL, 0.38], [PR, 0.38], [PL, 0.62], [PR, 0.62], [PC, 0.74], [PL, 0.86], [PR, 0.86]]
+    };
 
-    function layout() {
-      var half = scene.getBoundingClientRect().width / 2;
-      FACES.forEach(function (f) {
-        var el = die.querySelector('[data-face="' + f.key + '"]');
-        if (el) el.style.transform = f.rot + 'translateZ(' + half.toFixed(2) + 'px)';
-      });
-    }
-
-    /* ---- Which face is pointing at the camera? ----
-       The live transform is rotateX(rx) rotateY(ry), i.e. R = Rx · Ry, so
-       apply Ry first and pick whichever normal ends up with the largest z. */
-    function facing(rx, ry) {
-      var ax = rx * Math.PI / 180, ay = ry * Math.PI / 180;
-      var cx = Math.cos(ax), sx = Math.sin(ax);
-      var cy = Math.cos(ay), sy = Math.sin(ay);
-      var best = FACES[0], bestZ = -Infinity;
-      for (var i = 0; i < FACES.length; i++) {
-        var n = FACES[i].n;
-        // Ry: x' = cy*x + sy*z ; z' = -sy*x + cy*z
-        var x1 = cy * n[0] + sy * n[2];
-        var y1 = n[1];
-        var z1 = -sy * n[0] + cy * n[2];
-        // Rx: y'' = cx*y - sx*z ; z'' = sx*y + cx*z
-        var z2 = sx * y1 + cx * z1;
-        if (z2 > bestZ) { bestZ = z2; best = FACES[i]; }
+    function faceHTML(rank, glyph) {
+      var out = '<span class="idx tl">' + rank + '<i>' + glyph + '</i></span>' +
+                '<span class="idx br">' + rank + '<i>' + glyph + '</i></span>';
+      var spots = LAYOUTS[rank];
+      if (!spots) {                                  // J, Q, K
+        return out + '<span class="court">' + rank + '<i>' + glyph + '</i></span>';
       }
-      return best;
+      for (var i = 0; i < spots.length; i++) {
+        var x = spots[i][0], y = spots[i][1];
+        out += '<span class="pip' + (y > 0.5 ? ' flip' : '') + (rank === 'A' ? ' big' : '') +
+               '" style="left:' + (x * 100).toFixed(1) + '%;top:' + (y * 100).toFixed(1) + '%">' +
+               glyph + '</span>';
+      }
+      return out;
     }
 
-    var SAYINGS = [
-      'Pass it left', 'Pick a category', 'Everyone points', 'Rhyme or drink water',
-      'Trade seats', 'Never have I ever', 'Two truths', 'Cube says so'
-    ];
+    var narrow = window.innerWidth < 700;
+    var COUNT  = narrow ? 14 : 26;
+    var cards  = [];
+
+    // Depth bounds. Nearer cards are bigger (perspective does that for free),
+    // brighter, and move faster; far ones hang back as texture.
+    var Z_NEAR = 110, Z_FAR = -520;
+
+    // Draw from a shuffled 52 so no two cards in the air are the same card.
+    var pool = [];
+    for (var r = 0; r < RANKS.length; r++) {
+      for (var s = 0; s < SUITS.length; s++) pool.push([RANKS[r], SUITS[s]]);
+    }
+    for (var k = pool.length - 1; k > 0; k--) {
+      var j = Math.floor(Math.random() * (k + 1));
+      var tmp = pool[k]; pool[k] = pool[j]; pool[j] = tmp;
+    }
+
+    for (var i = 0; i < COUNT; i++) {
+      var rank = pool[i][0], suit = pool[i][1];
+      var el = document.createElement('div');
+      el.className = 'fly';
+      el.innerHTML =
+        '<div class="side face' + (suit[1] ? ' red' : '') + '">' + faceHTML(rank, suit[0]) + '</div>' +
+        '<div class="side back"></div>';
+      deck.appendChild(el);
+      cards.push({ el: el });
+    }
 
     /* ===================================================================
-       2. Physics: angular velocity with damping, then a snap to the nearest
-          quarter turn so the die always settles square to the camera.
+       2. Deal.
+
+       Randomness is stored as plain unit values so the layout can be
+       re-derived for any viewport without dealing a new hand — a phone
+       rotating shouldn't reshuffle the deck.
        =================================================================== */
-    var rx = -22, ry = 34;            // current euler angles, degrees
-    var vx = 0,   vy = 0;             // deg/frame-ish
-    var snapping = false, settled = true;
-    var dragging = false, lastX = 0, lastY = 0, moved = 0, lastMoveT = 0;
+    function deal() {
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        c.ux  = Math.random();                     // across the width
+        c.uy  = (i + Math.random() * 0.7) / cards.length;  // spread down the wrap
+        c.ud  = Math.random();                     // depth
+        c.ph  = Math.random() * 6.283;             // sway phase
+        c.rx0 = Math.random() * 360;
+        c.ry0 = Math.random() * 360;
+        c.rz0 = Math.random() * 360;
+        // Degrees per pixel scrolled. Gentle: a full screen of scrolling
+        // turns a card something under half a revolution.
+        c.srx = (Math.random() - 0.5) * 0.13;
+        c.sry = (Math.random() - 0.5) * 0.15;
+        c.srz = (Math.random() - 0.5) * 0.09;
 
-    function apply() {
-      die.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
-    }
-
-    function announce() {
-      var f = facing(rx, ry);
-      readNum.textContent = String(f.pips);
-      readSay.textContent = SAYINGS[Math.floor(Math.random() * SAYINGS.length)];
-    }
-
-    function land() {
-      settled = true;
-      snapping = false;
-      announce();
-      var r = scene.getBoundingClientRect();
-      Shards.burst(r.left + r.width / 2, r.top + r.height / 2, 18);
-    }
-
-    // A flick or a button press: spin hard, then let damping bring it down.
-    function roll(power) {
-      settled = false;
-      snapping = false;
-      var sign = Math.random() < 0.5 ? -1 : 1;
-      vy = sign * (10 + Math.random() * 10) * power;
-      vx = (Math.random() < 0.5 ? -1 : 1) * (7 + Math.random() * 9) * power;
-      if (REDUCED) {
-        // No tumbling — jump straight to a random resting face.
-        rx = (Math.random() * 4 | 0) * 90;
-        ry = (Math.random() * 4 | 0) * 90;
-        vx = vy = 0;
-        apply();
-        land();
+        var z = Z_FAR + c.ud * (Z_NEAR - Z_FAR);
+        c.z = z;
+        // Parallax and presence both follow depth, which is what sells it as
+        // one space rather than a collage.
+        c.par = 0.14 + c.ud * 0.42;
+        // 0.13–0.38. Text no longer sits directly on the cards — every block
+        // has a veil under it — so this is set by how the cards should look
+        // rather than by contrast. Measured: even the nearest card leaves
+        // --ink-faint at 7.4:1 through the veil.
+        c.el.style.opacity = (0.13 + c.ud * 0.25).toFixed(3);
       }
+      measure();
     }
 
-    document.getElementById('rollBtn').addEventListener('click', function () { roll(1); });
-    scene.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); roll(1); }
-    });
-
-    scene.addEventListener('pointerdown', function (e) {
-      dragging = true; moved = 0;
-      lastX = e.clientX; lastY = e.clientY;
-      lastMoveT = e.timeStamp;
-      vx = vy = 0;
-      snapping = false; settled = false;
-      scene.classList.add('grabbing');
-      try { scene.setPointerCapture(e.pointerId); } catch (err) {}
-    });
-
-    scene.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      var dx = e.clientX - lastX, dy = e.clientY - lastY;
-      lastX = e.clientX; lastY = e.clientY;
-      moved += Math.abs(dx) + Math.abs(dy);
-      var dt = Math.max(1, e.timeStamp - lastMoveT);
-      lastMoveT = e.timeStamp;
-      ry += dx * 0.55;
-      rx -= dy * 0.55;
-      // Track the throw so releasing mid-gesture keeps the momentum.
-      vy = (dx * 0.55) * (16 / dt);
-      vx = (-dy * 0.55) * (16 / dt);
-      apply();
-    });
-
-    function release() {
-      if (!dragging) return;
-      dragging = false;
-      scene.classList.remove('grabbing');
-      if (moved < 5) { roll(1); return; }        // a tap is a roll
-      vx = clamp(vx, -34, 34);
-      vy = clamp(vy, -34, 34);
-      if (Math.abs(vx) + Math.abs(vy) < 1.2) { vx = vy = 0; }
+    var W = 0, H = 0, SPAN = 0, CH = 0;
+    function measure() {
+      var r = field.getBoundingClientRect();
+      W = r.width || window.innerWidth;
+      H = r.height || window.innerHeight;
+      CH = cards[0].el.offsetHeight || 80;
+      SPAN = H + CH * 2.4;          // recycle band: fully off-screen both ends
     }
-    scene.addEventListener('pointerup', release);
-    scene.addEventListener('pointercancel', release);
 
-    /* ---- Main loop ---- */
-    var lastT = 0;
-    function frame(now) {
-      requestAnimationFrame(frame);
-      var dt = lastT ? Math.min(now - lastT, 50) : 16;
-      lastT = now;
-      var step = dt / 16.667;
-
-      if (dragging) return;
-
-      var speed = Math.abs(vx) + Math.abs(vy);
-      if (speed > 0.05) {
-        rx += vx * step;
-        ry += vy * step;
-        var damp = Math.pow(0.955, step);
-        vx *= damp; vy *= damp;
-        apply();
-        if (Math.abs(vx) + Math.abs(vy) < 0.6) { vx = vy = 0; snapping = true; }
-      } else if (snapping || (!settled && !REDUCED)) {
-        // Ease onto the nearest quarter turn on both axes.
-        var tx = Math.round(rx / 90) * 90;
-        var ty = Math.round(ry / 90) * 90;
-        var k = 1 - Math.pow(0.001, dt / 1000);
-        rx += (tx - rx) * k;
-        ry += (ty - ry) * k;
-        apply();
-        if (Math.abs(tx - rx) < 0.35 && Math.abs(ty - ry) < 0.35) {
-          rx = tx; ry = ty;
-          apply();
-          land();
-        }
-      }
-      Shards.tick(dt);
-    }
+    function wrap(v, m) { return ((v % m) + m) % m; }
 
     /* ===================================================================
-       3. A little gold confetti when it lands.
+       3. Pose. A pure function of scroll offset — nothing accumulates, so
+          scrolling back up rewinds exactly.
        =================================================================== */
-    var Shards = (function () {
-      var canvas = document.getElementById('shardCanvas');
-      var ctx = canvas.getContext('2d');
-      var list = [], W = 0, H = 0, dpr = 1;
-      var on = !REDUCED;
-
-      function resize() {
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        W = window.innerWidth; H = window.innerHeight;
-        canvas.width = Math.round(W * dpr);
-        canvas.height = Math.round(H * dpr);
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    function pose(s) {
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i];
+        // Drift up as the page goes down, recycling through the band.
+        var y = wrap(c.uy * SPAN - s * c.par, SPAN) - CH * 1.2;
+        var x = c.ux * (W + CH) - CH * 0.5
+              + Math.sin(s * 0.0013 + c.ph) * 14;
+        c.el.style.transform =
+          'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + c.z.toFixed(0) + 'px)' +
+          ' rotateX(' + (c.rx0 + s * c.srx).toFixed(1) + 'deg)' +
+          ' rotateY(' + (c.ry0 + s * c.sry).toFixed(1) + 'deg)' +
+          ' rotateZ(' + (c.rz0 + s * c.srz).toFixed(1) + 'deg)';
       }
-
-      function burst(x, y, n) {
-        if (!on) return;
-        for (var i = 0; i < n; i++) {
-          var a = Math.random() * 6.283;
-          var v = 1.6 + Math.random() * 4.4;
-          list.push({
-            x: x, y: y,
-            vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.4,
-            s: 1.6 + Math.random() * 3.2,
-            rot: Math.random() * 6.283,
-            vr: (Math.random() - 0.5) * 0.32,
-            life: 1,
-            dec: 0.010 + Math.random() * 0.014
-          });
-        }
-      }
-
-      function tick(dt) {
-        if (!on) return;
-        ctx.clearRect(0, 0, W, H);
-        if (!list.length) return;
-        var step = dt / 16.667;
-        ctx.globalCompositeOperation = 'lighter';
-        for (var i = list.length - 1; i >= 0; i--) {
-          var s = list[i];
-          s.vy += 0.07 * step;
-          s.vx *= 0.99; s.vy *= 0.99;
-          s.x += s.vx * step; s.y += s.vy * step;
-          s.rot += s.vr * step;
-          s.life -= s.dec * step;
-          if (s.life <= 0 || s.y > H + 60) { list.splice(i, 1); continue; }
-          ctx.save();
-          ctx.translate(s.x, s.y);
-          ctx.rotate(s.rot);
-          ctx.fillStyle = 'rgba(232, 185, 76, ' + (s.life * 0.9).toFixed(3) + ')';
-          ctx.beginPath();
-          ctx.moveTo(0, -s.s);
-          ctx.lineTo(s.s * 0.7, 0);
-          ctx.lineTo(0, s.s);
-          ctx.lineTo(-s.s * 0.7, 0);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-        }
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      resize();
-      window.addEventListener('resize', resize);
-      return { burst: burst, tick: tick, resize: resize };
-    })();
-
-    layout();
-    apply();
-    announce();
-    window.addEventListener('resize', layout);
-    requestAnimationFrame(frame);
-
-    // An opening roll, so the page arrives in motion.
-    if (!REDUCED) window.setTimeout(function () { roll(0.85); }, 620);
+    }
 
     /* ===================================================================
-       4. Reveals
+       4. Scroll drives it, and nothing else does.
+
+          The frame loop exists only to smooth the coarse steps a mouse wheel
+          delivers, and it shuts itself off as soon as it catches up. At rest
+          the cards are genuinely frozen: no timers, no frames, no work.
+       =================================================================== */
+    function scrollY() {
+      return window.pageYOffset || document.documentElement.scrollTop || 0;
+    }
+
+    var curr = 0, target = 0, raf = null, last = 0;
+
+    function tick(now) {
+      raf = null;
+      var dt = last ? Math.min((now - last) / 1000, 0.05) : 0.016;
+      last = now;
+      var d = target - curr;
+      if (Math.abs(d) < 0.35) { curr = target; pose(curr); last = 0; return; }
+      curr += d * (1 - Math.exp(-dt * 13));
+      pose(curr);
+      raf = requestAnimationFrame(tick);
+    }
+
+    function sync() {
+      target = scrollY();
+      if (raf === null) { last = 0; raf = requestAnimationFrame(tick); }
+    }
+
+    deal();
+    curr = target = scrollY();
+    pose(curr);
+
+    if (!REDUCED) {
+      window.addEventListener('scroll', sync, { passive: true });
+      window.addEventListener('resize', function () { measure(); sync(); });
+      window.addEventListener('orientationchange', function () { measure(); sync(); });
+    }
+
+    /* ===================================================================
+       5. Reveals
        =================================================================== */
     var els = [].slice.call(document.querySelectorAll('.rise'));
     if ('IntersectionObserver' in window && !REDUCED) {
