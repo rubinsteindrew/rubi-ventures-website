@@ -860,6 +860,22 @@
     .panel .lede { margin-top: 18px; max-width: 52ch; }
     .panel-cta { display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; margin-top: 34px; }
 
+    /* Apple's official badge artwork, hosted locally. Their identity
+       guidelines require the supplied badge rather than a lookalike, so this
+       one place deliberately steps outside the site's own button language.
+       White variant, which is the one intended for dark backgrounds. */
+    .appstore {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      transition: transform 320ms var(--ease), filter 320ms ease;
+    }
+    .appstore img { height: 46px; width: auto; }
+    .appstore:hover, .appstore:focus-visible {
+      transform: translateY(-2px);
+      filter: drop-shadow(0 6px 18px rgba(255, 255, 255, 0.18));
+    }
+
     .cuts { list-style: none; padding: 0; margin: 26px 0 0; }
     .cuts li {
       position: relative;
@@ -1167,11 +1183,11 @@
             </button>
             <ul class="dropdown-menu" id="appsMenu" role="menu" aria-labelledby="appsToggle">
               <li role="none">
-                <a href="https://yourclubhouse.net" target="_blank" rel="noopener" role="menuitem">
+                <a href="https://apps.apple.com/us/app/your-clubhouse/id6776061991" target="_blank" rel="noopener" role="menuitem">
                   <span class="tile"><img src="assets/clubhouse-logo.png" alt="" onerror="this.style.display='none'"></span>
                   <span>
                     <span class="di-name">Your Clubhouse <span class="di-ext">↗</span></span><br>
-                    <span class="di-desc">Golf, made social</span>
+                    <span class="di-desc">Golf, made social · On iOS</span>
                   </span>
                 </a>
               </li>
@@ -1307,8 +1323,12 @@
                 <li>Discover where to play next, wherever you land.</li>
               </ul>
               <div class="panel-cta">
-                <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="btn solid">
-                  yourclubhouse.net <span aria-hidden="true">↗</span>
+                <a class="appstore" href="https://apps.apple.com/us/app/your-clubhouse/id6776061991" target="_blank" rel="noopener"
+                   aria-label="Download Your Clubhouse on the App Store">
+                  <img src="assets/app-store-badge.svg" alt="Download on the App Store" width="120" height="40">
+                </a>
+                <a href="https://yourclubhouse.net" target="_blank" rel="noopener" class="link">
+                  yourclubhouse.net <span class="arw" aria-hidden="true">↗</span>
                 </a>
               </div>
               <p class="form-note" style="margin-top:18px;">On iPhone now. Android next.</p>
@@ -1494,7 +1514,7 @@
         Rubi Ventures, LLC &nbsp;·&nbsp; © 2026
       </span>
       <span class="footer-links">
-        <a href="https://yourclubhouse.net" target="_blank" rel="noopener">Your Clubhouse ↗</a>
+        <a href="https://apps.apple.com/us/app/your-clubhouse/id6776061991" target="_blank" rel="noopener">Your Clubhouse on the App Store ↗</a>
         <a href="/cube">The Cube</a>
         <a href="mailto:contact@rubiventures.com">contact@rubiventures.com</a>
       </span>
